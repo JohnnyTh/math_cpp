@@ -1,5 +1,7 @@
 #include <chrono>
-#include <opencv4/opencv2/imgcodecs.hpp>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "mandelbrot.hpp"
 #include "utilities.hpp"
@@ -8,15 +10,15 @@
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
-    int size_x = 800;
-    int size_y = 800;
+    int size_x = 1000;
+    int size_y = 1000;
 
     double real_min = -2.0;
     double real_max = 1.0;
     double imag_min = -1.0;
     double imag_max = 1.0;
 
-    int n_iterations = 25;
+    int n_iterations = 1;
     double threshold = 2.0;
 
     (void) printf("Generating Mandelbrot set\n");
@@ -43,7 +45,13 @@ int main() {
 
     //mandelbrot::print_complex_set(complex_set);
     //mandelbrot::print_vector(threshold_crossed_at_iter);
-    (void) cv::imwrite("mandelbrot.png", greyscale_mat);
+    //cv::Mat resized_mat;
+    //cv::resize(greyscale_mat, resized_mat, cv::Size(), 1.5, 1.5, cv::INTER_AREA);
+    std::ostringstream stream;
+    stream << "mandelbrot_" << n_iterations << ".png";
+    std::string img_name = stream.str();
+    (void) cv::imwrite(img_name, greyscale_mat);
+
     math_cpp_utils::print_time_from_start("Done finish program", start);
     return 0;
 }

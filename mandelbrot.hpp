@@ -36,12 +36,9 @@ namespace mandelbrot {
         return complex_set;
     }
 
-    std::complex<double> mandelbrot_func(double z_val, std::complex<double> complex_val) {
-        return std::pow(z_val, 2) + complex_val;
-    }
-
-    std::complex<double> mandelbrot_func_2(std::complex<double> z_val, std::complex<double> complex_val) {
-        return std::pow(z_val, 2) + complex_val;
+    template<typename T>
+    std::complex<double> mandelbrot_func(T z_val, std::complex<double> complex_val) {
+        return std::pow(std::complex<double>(z_val), 2) + complex_val;
     }
 
     std::vector<int> mandelbrot_sequence(
@@ -51,34 +48,26 @@ namespace mandelbrot {
     ) {
         auto n_values = static_cast<int>(complex_set.size());
 
-        std::vector<std::complex<double>> complex_set_iterated = complex_set;
-
         std::vector<int> threshold_crossed_at_iteration(n_values, -1);
 
-        for (int idx_iter = 0; idx_iter < n_iterations; idx_iter++) {
+        for (int idx_value = 0; idx_value < n_values; idx_value++) {
 
-            for (int idx_value = 0; idx_value < n_values; idx_value++) {
-                auto threshold_crossed = threshold_crossed_at_iteration[idx_value];
+            auto complex_value = complex_set[idx_value];
+            std::complex<double> complex_value_iterated;
 
-                // compute fc(0) only if threshold has not been crossed
-                if (threshold_crossed == -1) {
-                    auto complex_value = complex_set[idx_value];
-                    std::complex<double> complex_value_after;
+            for (int idx_iter = 0; idx_iter < n_iterations; idx_iter++) {
 
+                if (idx_iter == 0) {
                     // if it is first iteration, use fc(0) = z**2 + c
-                    if (idx_iter == 0) {
-                        complex_value_after = mandelbrot_func(0.0, complex_value);
-                        complex_set_iterated[idx_value] = complex_value_after;
-                        // on other iterations, use fc(fc(0)), or fc(fc(fc(0))), etc ...
-                    } else {
-                        auto z = complex_set_iterated[idx_value];
-                        complex_value_after = mandelbrot_func_2(z, complex_value);
-                        complex_set_iterated[idx_value] = complex_value_after;
-                    }
+                    complex_value_iterated = mandelbrot_func(0.0, complex_value);
+                } else {
+                    // on other iterations, use fc(fc(0)), or fc(fc(fc(0))), etc ...
+                    complex_value_iterated = mandelbrot_func(complex_value_iterated, complex_value);
+                }
 
-                    if (abs(complex_value_after) > threshold) {
-                        threshold_crossed_at_iteration[idx_value] = idx_iter;
-                    }
+                if (abs(complex_value_iterated) > threshold) {
+                    threshold_crossed_at_iteration[idx_value] = idx_iter;
+                    break;
                 }
             }
         }
