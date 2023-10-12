@@ -11,9 +11,16 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+# find OpenCV
+find_package(OpenCV REQUIRED)
+
 add_executable(
         run_mandelbrot
         run_mandelbrot.cpp
         mandelbrot.hpp
         utilities.hpp
 )
+
+
+# link OpenCV
+target_link_libraries(run_mandelbrot ${OpenCV_LIBS})
