@@ -46,7 +46,8 @@ namespace mandelbrot {
 
     std::vector<int> mandelbrot_sequence(
             std::vector<std::complex<double>> &complex_set,
-            double threshold, int n_iterations
+            double threshold,
+            int n_iterations
     ) {
         auto n_values = static_cast<int>(complex_set.size());
 
@@ -98,4 +99,5 @@ namespace mandelbrot {
         }
         (void) printf("\n");
     }
+
 }
