@@ -10,16 +10,16 @@
 int main() {
     auto start = std::chrono::high_resolution_clock::now();
 
-    int size_x = 1000;
-    int size_y = 1000;
+    int size_x = 1600 * 1;
+    int size_y = 900 * 1;
 
-    double real_min = -2.0;
+    double real_min = -3.0;
     double real_max = 1.0;
-    double imag_min = -1.0;
-    double imag_max = 1.0;
+    double imag_min = -1.5;
+    double imag_max = 1.5;
 
-    int n_iterations = 1;
-    double threshold = 2.0;
+    int n_iterations = 35;
+    double threshold = 6.0;
 
     (void) printf("Generating Mandelbrot set\n");
 
@@ -30,12 +30,15 @@ int main() {
 
     math_cpp_utils::print_time_from_start("Done mandelbrot_sequence", start);
 
-    // postprocess results
-    math_cpp_utils::replace_value_with_another(threshold_crossed_at_iter, -1, n_iterations);
-
     std::vector<int> greyscale_values;
     for (const auto &iter: threshold_crossed_at_iter) {
-        int greyscale_color = math_cpp_utils::assign_greyscale_color_based_on_value(iter, 0.0, n_iterations);
+        int greyscale_color = math_cpp_utils::assign_greyscale_color_based_on_value(
+                iter,
+                0.0,
+                n_iterations,
+                255.0,
+                0
+        );
         greyscale_values.push_back(greyscale_color);
     }
 
