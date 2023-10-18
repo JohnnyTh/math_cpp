@@ -24,6 +24,7 @@ add_executable(
 target_link_libraries(gen_img_mandelbrot ${OpenCV_LIBS})
 
 # ------------------------- GUI build -----------------------
+find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 # source https://www.glfw.org/docs/3.3/build_guide.html
 find_package(glfw3 3.3 REQUIRED)
@@ -52,8 +53,11 @@ add_executable(
 add_executable(
         render_mandelbrot_opengl
         render_mandelbrot_opengl.cpp
+        mandelbrot.hpp
 )
 
 target_link_libraries(run_gui_mandelbrot glfw OpenGL::GL)
-target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL)
+
+target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL GLEW::GLEW)
+
 target_include_directories(run_gui_mandelbrot PUBLIC submodules/imgui)

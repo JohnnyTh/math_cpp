@@ -20,7 +20,6 @@ namespace mandelbrot {
         // Y axis - imaginary numbers
         // X axis - real axis
         std::vector<std::complex<double>> complex_set;
-        (void) printf("Generating set of complex numbers\n");
 
         for (int i = 0; i < size_y; i++) {
             double imag_interpolation_frac = static_cast<double>(i) / (static_cast<double>(size_y) - 1.0);
@@ -89,8 +88,11 @@ namespace mandelbrot {
         auto complex_set = mandelbrot::gen_complex_set(size_x, size_y, real_min, real_max, imag_min, imag_max);
 
         // check sequence condition (divergence to infinity for each value)
-        std::vector<int> threshold_crossed_at_iter = mandelbrot::mandelbrot_sequence(complex_set, threshold,
-                                                                                     n_iterations);
+        std::vector<int> threshold_crossed_at_iter = mandelbrot::mandelbrot_sequence(
+                complex_set,
+                threshold,
+                n_iterations
+        );
 
         std::vector<float> greyscale_values;
         for (const auto &iter: threshold_crossed_at_iter) {
