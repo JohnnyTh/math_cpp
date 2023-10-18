@@ -1,7 +1,7 @@
 #include <vector>
 #include <chrono>
 
-#include <opencv4/opencv2/core.hpp>
+//#include <opencv4/opencv2/core.hpp>
 
 
 namespace math_cpp_utils {
@@ -24,20 +24,37 @@ namespace math_cpp_utils {
         return color;
     }
 
-    cv::Mat get_greyscale_mat(std::vector<int> const &greyscale_values, int size_x, int size_y) {
-        cv::Mat greyscale_mat(size_y, size_x, CV_8UC1);
+    float assign_greyscale_color_based_on_value_float(
+            double value,
+            double min_value,
+            double max_value,
+            float neg_1_color) {
+        // Map the value to a number between 0 and 1.
+        float color;
 
-        int idx_global = 0;
-
-        for (int i_row = 0; i_row < size_y; i_row++) {
-            for (int j_col = 0; j_col < size_x; ++j_col) {
-                greyscale_mat.at<uchar>(i_row, j_col) = greyscale_values[idx_global];
-                idx_global++;
-            }
+        if (value != -1.0) {
+            color = static_cast<float>((value - min_value) / (max_value - min_value));
+        } else {
+            color = neg_1_color;
         }
 
-        return greyscale_mat;
+        return color;
     }
+
+//    cv::Mat get_greyscale_mat(std::vector<int> const &greyscale_values, int size_x, int size_y) {
+//        cv::Mat greyscale_mat(size_y, size_x, CV_8UC1);
+//
+//        int idx_global = 0;
+//
+//        for (int i_row = 0; i_row < size_y; i_row++) {
+//            for (int j_col = 0; j_col < size_x; ++j_col) {
+//                greyscale_mat.at<uchar>(i_row, j_col) = greyscale_values[idx_global];
+//                idx_global++;
+//            }
+//        }
+//
+//        return greyscale_mat;
+//    }
 
     void replace_value_with_another(std::vector<int> &values, int val_to_replace, int val_new) {
         int n_values = static_cast<int>(values.size());

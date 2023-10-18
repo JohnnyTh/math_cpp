@@ -15,6 +15,8 @@
 
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
+#include "mandelbrot.hpp"
+
 
 static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -88,11 +90,22 @@ int main(int, char **) {
     //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
-
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+    GLuint Texture;
+    glGenTextures(1, &Texture);
+    glBindTexture(GL_TEXTURE_2D, Texture);
+
+    double real_min = -3.0;
+    double real_max = 1.0;
+    double imag_min = -1.5;
+    double imag_max = 1.5;
+
+    int n_iterations = 35;
+    double threshold = 6.0;
 
     // Main loop
 #ifdef __EMSCRIPTEN__
@@ -104,6 +117,20 @@ int main(int, char **) {
     while (!glfwWindowShouldClose(window))
 #endif
     {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
+        std::vector<float> mandelbrot_grey = mandelbrot::gen_mandelbrot_greyscale(
+                width,
+                height,
+                real_min,
+                real_max,
+                imag_min,
+                imag_max,
+                threshold,
+                n_iterations
+        );
+
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -150,24 +177,45 @@ int main(int, char **) {
             ImGui::End();
         }
 
-        // 3. Show another simple window.
-        if (show_another_window) {
-            ImGui::Begin("Another Window",
-                         &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
         // Rendering
         ImGui::Render();
+
         int display_w, display_h;
+
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w,
-                     clear_color.w);
+
+        glClearColor(
+                clear_color.x * clear_color.w,
+                clear_color.y * clear_color.w,
+                clear_color.z * clear_color.w,
+                clear_color.w
+        );
+
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_R8,
+                width,
+                height,
+                0,
+                GL_RED,
+                GL_UNSIGNED_BYTE,
+                mandelbrot_grey.data()
+        );
+        //glGenerateMipmap(GL_TEXTURE_2D);
+
+        // Texture parameters for how this texture will be used
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glActiveTexture(GL_TEXTURE0); // you can use GL_TEXTURE1, ..., GL_TEXTURE31
+        glBindTexture(GL_TEXTURE_2D, Texture);
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         glfwSwapBuffers(window);
