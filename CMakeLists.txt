@@ -49,5 +49,11 @@ add_executable(
         ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
+add_executable(
+        render_mandelbrot_opengl
+        render_mandelbrot_opengl.cpp
+)
+
 target_link_libraries(run_gui_mandelbrot glfw OpenGL::GL)
+target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL)
 target_include_directories(run_gui_mandelbrot PUBLIC submodules/imgui)

@@ -1,6 +1,8 @@
 #include <complex>
 #include <vector>
 
+#include "utilities.hpp"
+
 namespace mandelbrot {
 
     double interpolate(double value_left, double value_right, double frac_right) {
@@ -72,6 +74,35 @@ namespace mandelbrot {
             }
         }
         return threshold_crossed_at_iteration;
+    }
+
+    std::vector<float> gen_mandelbrot_greyscale(
+            int size_x,
+            int size_y,
+            double real_min,
+            double real_max,
+            double imag_min,
+            double imag_max,
+            double threshold,
+            int n_iterations
+    ) {
+        auto complex_set = mandelbrot::gen_complex_set(size_x, size_y, real_min, real_max, imag_min, imag_max);
+
+        // check sequence condition (divergence to infinity for each value)
+        std::vector<int> threshold_crossed_at_iter = mandelbrot::mandelbrot_sequence(complex_set, threshold,
+                                                                                     n_iterations);
+
+        std::vector<float> greyscale_values;
+        for (const auto &iter: threshold_crossed_at_iter) {
+            float greyscale_color = math_cpp_utils::assign_greyscale_color_based_on_value_float(
+                    iter,
+                    0.0,
+                    n_iterations,
+                    0
+            );
+            greyscale_values.push_back(greyscale_color);
+        }
+        return greyscale_values;
     }
 
     void print_complex_set(const std::vector<std::complex<double>> &complex_set) {
