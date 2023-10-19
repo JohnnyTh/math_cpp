@@ -64,3 +64,10 @@ add_executable(
 
 target_link_libraries(render_mandelbrot_imgui glfw OpenGL::GL)
 target_include_directories(render_mandelbrot_imgui PUBLIC submodules/imgui)
+
+# -------------------------- Experiments -------------
+
+add_executable(
+        experiments
+        experiments.cpp
+)

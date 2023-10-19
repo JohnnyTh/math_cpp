@@ -54,17 +54,13 @@ namespace mandelbrot {
         for (int idx_value = 0; idx_value < n_values; idx_value++) {
 
             auto complex_value = complex_set[idx_value];
-            std::complex<double> complex_value_iterated;
+            std::complex<double> complex_value_iterated(0.0);
 
             for (int idx_iter = 0; idx_iter < n_iterations; idx_iter++) {
 
-                if (idx_iter == 0) {
-                    // if it is first iteration, use fc(0) = z**2 + c
-                    complex_value_iterated = mandelbrot_func(0.0, complex_value);
-                } else {
-                    // on other iterations, use fc(fc(0)), or fc(fc(fc(0))), etc ...
-                    complex_value_iterated = mandelbrot_func(complex_value_iterated, complex_value);
-                }
+                // if it is first iteration, use fc(0) = z**2 + c
+                // on other iterations, use fc(fc(0)), or fc(fc(fc(0))), etc ...
+                complex_value_iterated = mandelbrot_func(complex_value_iterated, complex_value);
 
                 if (abs(complex_value_iterated) > threshold) {
                     threshold_crossed_at_iteration[idx_value] = idx_iter;
