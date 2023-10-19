@@ -37,9 +37,8 @@ namespace mandelbrot {
         return complex_set;
     }
 
-    template<typename T>
-    std::complex<double> mandelbrot_func(T z_val, std::complex<double> complex_val) {
-        return std::pow(std::complex<double>(z_val), 2) + complex_val;
+    std::complex<double> mandelbrot_func(std::complex<double> z_val, std::complex<double> complex_val) {
+        return std::pow(z_val, 2) + complex_val;
     }
 
     std::vector<int> mandelbrot_sequence(
