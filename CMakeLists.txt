@@ -11,33 +11,43 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+# ------------------------- OpenCV image generation build --------------------
 # find OpenCV
 find_package(OpenCV REQUIRED)
 
 add_executable(
-        gen_img_mandelbrot
-        gen_img_mandelbrot.cpp
-        mandelbrot.hpp
-        utilities.hpp
+        render_mandelbrot_opencv_img
+        render_mandelbrot_opencv_img.cpp
+        src/cpp/mandelbrot.hpp
+        src/cpp/utilities.hpp
+        src/cpp/utilities_opencv.hpp
 )
 # link OpenCV
-target_link_libraries(gen_img_mandelbrot ${OpenCV_LIBS})
-
-# ------------------------- GUI build -----------------------
+target_link_libraries(render_mandelbrot_opencv_img ${OpenCV_LIBS})
+# ------------------------- OpenGl render build --------------------
 find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 # source https://www.glfw.org/docs/3.3/build_guide.html
 find_package(glfw3 3.3 REQUIRED)
 
+add_executable(
+        render_mandelbrot_opengl
+        render_mandelbrot_opengl.cpp
+        src/cpp/mandelbrot.hpp
+)
+target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL GLEW::GLEW)
+
+
+# ------------------------- IMGUI render build -----------------------
 # Dear ImGui
 set(IMGUI_DIR submodules/imgui)
-include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends ..)
+include_directories(${IMGUI_DIR} ${IMGUI_DIR}/backends)
 
 add_executable(
-        run_gui_mandelbrot
-        run_gui_mandelbrot.cpp
-        mandelbrot.hpp
-        utilities.hpp
+        render_mandelbrot_imgui
+        render_mandelbrot_imgui.cpp
+        src/cpp/mandelbrot.hpp
+        src/cpp/utilities.hpp
         ${IMGUI_DIR}/imgui.h
         ${IMGUI_DIR}/imgui.cpp
         ${IMGUI_DIR}/backends/imgui_impl_glfw.h
@@ -50,14 +60,5 @@ add_executable(
         ${IMGUI_DIR}/imgui_widgets.cpp
 )
 
-add_executable(
-        render_mandelbrot_opengl
-        render_mandelbrot_opengl.cpp
-        mandelbrot.hpp
-)
-
-target_link_libraries(run_gui_mandelbrot glfw OpenGL::GL)
-
-target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL GLEW::GLEW)
-
-target_include_directories(run_gui_mandelbrot PUBLIC submodules/imgui)
+target_link_libraries(render_mandelbrot_imgui glfw OpenGL::GL)
+target_include_directories(render_mandelbrot_imgui PUBLIC submodules/imgui)

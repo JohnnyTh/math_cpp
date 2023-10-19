@@ -9,7 +9,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "mandelbrot.hpp"
+#include "src/cpp/mandelbrot.hpp"
 
 static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -183,7 +183,7 @@ int main(int, char **) {
         return -1;
     }
 
-    GLuint shaderProgram = LoadShaders("../vertex.vertexshader", "../fragment.fragmentshader");
+    GLuint shaderProgram = LoadShaders("vertex.vert", "fragment.frag");
     if (shaderProgram == 0) return -1;
 
     GLuint Texture;

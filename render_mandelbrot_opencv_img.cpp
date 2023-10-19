@@ -1,10 +1,9 @@
 #include <chrono>
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include "mandelbrot.hpp"
-#include "utilities.hpp"
+#include "src/cpp/mandelbrot.hpp"
+#include "src/cpp/utilities_opencv.hpp"
 
 
 int main() {
@@ -42,17 +41,17 @@ int main() {
         greyscale_values.push_back(greyscale_color);
     }
 
-    cv::Mat greyscale_mat = math_cpp_utils::get_greyscale_mat(greyscale_values, size_x, size_y);
+    cv::Mat greyscale_mat = math_cpp_utils_opencv::get_greyscale_mat(greyscale_values, size_x, size_y);
 
     math_cpp_utils::print_time_from_start("Done postprocess", start);
 
     //mandelbrot::print_complex_set(complex_set);
     //mandelbrot::print_vector(threshold_crossed_at_iter);
-    //cv::Mat resized_mat;
-    //cv::resize(greyscale_mat, resized_mat, cv::Size(), 1.5, 1.5, cv::INTER_AREA);
     std::ostringstream stream;
     stream << "mandelbrot_" << n_iterations << ".png";
     std::string img_name = stream.str();
+
+    (void) printf("Save image at: %s", img_name.c_str());
     (void) cv::imwrite(img_name, greyscale_mat);
 
     math_cpp_utils::print_time_from_start("Done finish program", start);
