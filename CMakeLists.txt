@@ -34,6 +34,7 @@ add_executable(
         render_mandelbrot_opengl
         render_mandelbrot_opengl.cpp
         src/cpp/mandelbrot.hpp
+        src/cpp/utilities_shaders.hpp
 )
 target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL GLEW::GLEW)
 
@@ -58,6 +59,7 @@ add_executable(
         ${IMGUI_DIR}/imgui_demo.cpp
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
+        src/cpp/utilities_shaders.hpp
 )
 
 target_link_libraries(render_mandelbrot_imgui glfw OpenGL::GL)
