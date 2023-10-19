@@ -30,14 +30,23 @@ find_package(OpenGL REQUIRED)
 # source https://www.glfw.org/docs/3.3/build_guide.html
 find_package(glfw3 3.3 REQUIRED)
 
+# unoptimized: generate on cpu -> texture -> render
 add_executable(
         render_mandelbrot_opengl
-        render_mandelbrot_opengl.cpp
+        render_mandelbrot_opengl_base.cpp
         src/cpp/mandelbrot.hpp
         src/cpp/utilities_shaders.hpp
 )
 target_link_libraries(render_mandelbrot_opengl glfw OpenGL::GL GLEW::GLEW)
 
+# compute mandelbrot using shader
+add_executable(
+        render_mandelbrot_opengl_shader
+        render_mandelbrot_opengl_shader.cpp
+        src/cpp/mandelbrot.hpp
+        src/cpp/utilities_shaders.hpp
+)
+target_link_libraries(render_mandelbrot_opengl_shader glfw OpenGL::GL GLEW::GLEW)
 
 # ------------------------- IMGUI render build -----------------------
 # Dear ImGui

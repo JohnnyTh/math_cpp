@@ -34,7 +34,6 @@ namespace math_cpp_utils {
         } else {
             color = neg_1_color;
         }
-
         return color;
     }
 
