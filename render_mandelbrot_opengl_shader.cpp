@@ -61,8 +61,9 @@ int main(int, char **) {
     };
     unsigned int indices[] = {0, 1, 2, 1, 2, 3};
 
-    float real_delta = 0.01f;
-    float imag_delta = 0.01f;
+    float real_delta = 0.05f;
+    float imag_delta = 0.05f;
+    float scale_delta = 0.05f;
 
     int width = 1980;
     int height = 1080;
@@ -113,14 +114,15 @@ int main(int, char **) {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    std::vector<float> complex_set = mandelbrot::gen_complex_set_float(
+    std::vector<float> complex_set = mandelbrot::gen_complex_set_2_shader(
             width, height, real_min, real_max, imag_min, imag_max
     );
 
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT,
-                 complex_set.data());
+    glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, complex_set.data()
+    );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // -------------------
@@ -135,8 +137,7 @@ int main(int, char **) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     // VAO definition
     GLuint VAO;
@@ -146,12 +147,10 @@ int main(int, char **) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // Position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                          (void *) nullptr);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
     // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
-                          (void *) (2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -171,25 +170,40 @@ int main(int, char **) {
         // --------------------- Handle user controls -------------------------
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             // imag += imag_diff;
-            mandelbrot::adjust_complex_set_float_imag(complex_set, imag_delta);
+            mandelbrot::complex_set_adjust_imag(complex_set, imag_delta);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             // imag -= imag_diff;
-            mandelbrot::adjust_complex_set_float_imag(complex_set, -imag_delta);
+            mandelbrot::complex_set_adjust_imag(complex_set, -imag_delta);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             // real -= real_delta;
-            mandelbrot::adjust_complex_set_float_real(complex_set, -real_delta);
+            mandelbrot::complex_set_adjust_real(complex_set, -real_delta);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
             // real += real_delta;
-            mandelbrot::adjust_complex_set_float_real(complex_set, real_delta);
+            mandelbrot::complex_set_adjust_real(complex_set, real_delta);
             is_complex_set_modified = true;
         }
-
+        if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
+            // zoom out (increase all values)
+            float scale_adjust = 1 + scale_delta;
+            mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            real_delta = real_delta * scale_adjust;
+            imag_delta = imag_delta * scale_adjust;
+            is_complex_set_modified = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
+            // zoom in (decrease all values)
+            float scale_adjust = 1 - scale_delta;
+            mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            real_delta = real_delta * scale_adjust;
+            imag_delta = imag_delta * scale_adjust;
+            is_complex_set_modified = true;
+        }
         // Render on the whole framebuffer, complete from the lower left corner to
         // the upper right
         glViewport(0, 0, width, height);
@@ -206,7 +220,7 @@ int main(int, char **) {
 
         glUseProgram(shaderProgram);
 
-        // set uniform params
+        // set uniform (shared) params
         glUniform1f(threshold_loc, threshold);
         glUniform1i(n_iterations_loc, n_iterations);
 
