@@ -1,8 +1,8 @@
 //
 // Created by maksym on 18/10/23.
 //
-#include <cstdio>
 #include <chrono>
+#include <cstdio>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -14,14 +14,17 @@ static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::steady_clock::now();
+std::chrono::time_point<std::chrono::steady_clock> lastTime =
+        std::chrono::steady_clock::now();
 int fpsCount = 0;
 int fps = 0;
 
 void get_fps() {
     auto currentTime = std::chrono::steady_clock::now();
 
-    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - lastTime).count();
+    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            currentTime - lastTime)
+            .count();
     ++fpsCount;
 
     if (elapsedTime > 1000000000) {
@@ -29,10 +32,10 @@ void get_fps() {
         fps = fpsCount;
         fpsCount = 0;
 
-        printf("%d fps\n", fps); // print out fps in every second (or you can use it elsewhere)
+        printf("%d fps\n",
+               fps); // print out fps in every second (or you can use it elsewhere)
     }
 }
-
 
 int main(int, char **) {
     // Initialise GLFW
@@ -43,56 +46,59 @@ int main(int, char **) {
         return -1;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
+    glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Apple compatibility
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
+    glfwWindowHint(GLFW_OPENGL_PROFILE,
+                   GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
 
     float vertices[] = {
-            -1.0f, -1.0f, 0.0f, 0.0f,  // Bottom-left
-            1.0f, -1.0f, 1.0f, 0.0f,  // Bottom-right
-            -1.0f, 1.0f, 0.0f, 1.0f,  // Top-left
-            1.0f, 1.0f, 1.0f, 1.0f,  // Top-right
+            -1.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
+            1.0f, -1.0f, 1.0f, 0.0f, // Bottom-right
+            -1.0f, 1.0f, 0.0f, 1.0f, // Top-left
+            1.0f, 1.0f, 1.0f, 1.0f, // Top-right
     };
-    unsigned int indices[] = {
-            0, 1, 2,
-            1, 2, 3
-    };
+    unsigned int indices[] = {0, 1, 2, 1, 2, 3};
 
-    int width = 1280;
-    int height = 720;
+    float real_delta = 0.01f;
+    float imag_delta = 0.01f;
 
-    float real_min = -3.0;
-    float real_max = 1.0;
-    float imag_min = -1.5;
-    float imag_max = 1.5;
+    int width = 1980;
+    int height = 1080;
+
+    float real_min = -3.0f;
+    float real_max = 1.0f;
+    float imag_min = -1.5f;
+    float imag_max = 1.5f;
 
     int n_iterations = 35;
-    float threshold = 6.0;
+    float threshold = 6.0f;
 
     // Open a window and create its OpenGL context
-    GLFWwindow *window; // (In the accompanying source code, this variable is global for simplicity)
+    GLFWwindow *window; // (In the accompanying source code, this variable is
+    // global for simplicity)
     window = glfwCreateWindow(width, height, "Mandelbrot render", nullptr, nullptr);
 
     if (window == nullptr) {
-        fprintf(
-                stderr,
-                "Failed to open GLFW window. "
-                "If you have an Intel GPU, they are not 3.3 compatible."
-                "\n");
+        fprintf(stderr, "Failed to open GLFW window. "
+                        "If you have an Intel GPU, they are not 3.3 compatible."
+                        "\n");
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window); // Initialize GLEW
 
-    glewExperimental = GL_TRUE; // Needed in core profile
+    // enable GLEW
+    glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
         fprintf(stderr, "Failed to initialize GLEW\n");
         return -1;
     }
+    glfwGetFramebufferSize(window, &width, &height);
 
     GLuint shaderProgram = utils_shaders::LoadShaders("vertex.vert", "fragment_mb.frag");
+
     if (shaderProgram == 0) {
         fprintf(stderr, "Error loading shader");
         return -1;
@@ -108,22 +114,17 @@ int main(int, char **) {
     glBindTexture(GL_TEXTURE_2D, texture);
 
     std::vector<float> complex_set = mandelbrot::gen_complex_set_float(
-            width,
-            height,
-            real_min,
-            real_max,
-            imag_min,
-            imag_max
+            width, height, real_min, real_max, imag_min, imag_max
     );
 
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, complex_set.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT,
+                 complex_set.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // -------------------
 
-    glfwGetFramebufferSize(window, &width, &height);
 
     // VBO definition
     GLuint VBO, EBO;
@@ -134,7 +135,8 @@ int main(int, char **) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+                 GL_STATIC_DRAW);
 
     // VAO definition
     GLuint VAO;
@@ -144,10 +146,12 @@ int main(int, char **) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // Position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                          (void *) nullptr);
     glEnableVertexAttribArray(0);
     // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float),
+                          (void *) (2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -156,19 +160,48 @@ int main(int, char **) {
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-    while (
-            glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-            glfwWindowShouldClose(window) == 0) {
+
+    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+           glfwWindowShouldClose(window) == 0) {
+
+        bool is_complex_set_modified = false;
 
         get_fps();
 
+        // --------------------- Handle user controls -------------------------
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+            // imag += imag_diff;
+            mandelbrot::adjust_complex_set_float_imag(complex_set, imag_delta);
+            is_complex_set_modified = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+            // imag -= imag_diff;
+            mandelbrot::adjust_complex_set_float_imag(complex_set, -imag_delta);
+            is_complex_set_modified = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+            // real -= real_delta;
+            mandelbrot::adjust_complex_set_float_real(complex_set, -real_delta);
+            is_complex_set_modified = true;
+        }
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+            // real += real_delta;
+            mandelbrot::adjust_complex_set_float_real(complex_set, real_delta);
+            is_complex_set_modified = true;
+        }
 
-        glViewport(0, 0, width,
-                   height); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+        // Render on the whole framebuffer, complete from the lower left corner to
+        // the upper right
+        glViewport(0, 0, width, height);
 
         glClear(GL_COLOR_BUFFER_BIT);
-
         // --------------------- Draw section -------------------------
+        if (is_complex_set_modified) {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_FLOAT, complex_set.data());
+
+        }
+        glFinish();
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
