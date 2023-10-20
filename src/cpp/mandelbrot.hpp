@@ -5,16 +5,6 @@
 
 namespace mandelbrot {
 
-    struct ComplexVal {
-        float real;
-        float imag;
-
-        ComplexVal(float r, float i) {
-            real = r;
-            imag = i;
-        }
-    };
-
     template<typename T>
     typename std::enable_if<std::is_floating_point<T>::value, T>::type
     interpolate(T value_left, T value_right, T frac_right) {
@@ -136,6 +126,20 @@ namespace mandelbrot {
             greyscale_values.push_back(greyscale_color);
         }
         return greyscale_values;
+    }
+
+    void adjust_complex_set_float_real(std::vector<float> &complex_set, float real_delta) {
+        int n_elems = static_cast<int>(complex_set.size());
+        for (int i = 0; i < n_elems; i += 2) {
+            complex_set[i] += real_delta;
+        }
+    }
+
+    void adjust_complex_set_float_imag(std::vector<float> &complex_set, float imag_delta) {
+        int n_elems = static_cast<int>(complex_set.size());
+        for (int i = 1; i < n_elems; i += 2) {
+            complex_set[i] += imag_delta;
+        }
     }
 
     void print_complex_set(const std::vector<std::complex<double>> &complex_set) {
