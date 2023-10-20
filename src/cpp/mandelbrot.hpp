@@ -1,5 +1,7 @@
 #include <complex>
 #include <vector>
+#include <istream>
+#include <iostream>
 
 #include "utilities.hpp"
 
@@ -39,7 +41,7 @@ namespace mandelbrot {
         return complex_set;
     }
 
-    std::vector<float> gen_complex_set_float(
+    std::vector<float> gen_complex_set_2_shader(
             int size_x,
             int size_y,
             float real_min,
@@ -128,17 +130,38 @@ namespace mandelbrot {
         return greyscale_values;
     }
 
-    void adjust_complex_set_float_real(std::vector<float> &complex_set, float real_delta) {
+    void complex_set_adjust_real(std::vector<float> &complex_set, float real_delta) {
         int n_elems = static_cast<int>(complex_set.size());
         for (int i = 0; i < n_elems; i += 2) {
             complex_set[i] += real_delta;
         }
     }
 
-    void adjust_complex_set_float_imag(std::vector<float> &complex_set, float imag_delta) {
+    void complex_set_adjust_imag(std::vector<float> &complex_set, float imag_delta) {
         int n_elems = static_cast<int>(complex_set.size());
         for (int i = 1; i < n_elems; i += 2) {
             complex_set[i] += imag_delta;
+        }
+    }
+
+    void complex_set_adjust_scale(std::vector<float> &complex_set, float scale) {
+        if (complex_set.empty()) {
+            std::cerr << "Warning: Input vector is empty." << std::endl;
+            return;
+        }
+        for (auto &elem: complex_set) {
+            float result = elem * scale;
+
+            // Check for underflow and overflow
+            if (result < -std::numeric_limits<float>::max()) {
+                std::cerr << "Warning: Set scaling underflow." << std::endl;
+                elem = -std::numeric_limits<float>::max();
+            } else if (result > std::numeric_limits<float>::max()) {
+                std::cerr << "Warning: Set scaling overflow." << std::endl;
+                elem = std::numeric_limits<float>::max();
+            } else {
+                elem = result;
+            }
         }
     }
 
