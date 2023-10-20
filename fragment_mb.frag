@@ -15,26 +15,20 @@ vec2 complexMul(vec2 a, vec2 b) {
 }
 
 vec2 mandelbrotFunc(vec2 z_val, vec2 complex_val) {
-    return complexMul(z_val, z_val) + complex_val;
+    return vec2(complexMul(z_val, z_val) + complex_val);
 }
 
-float complexAbsNaive(vec2 compl) {
-    return sqrt(pow(compl.x, 2) + pow(compl.y, 2));
-}
 
-float complexAbs(vec2 compl) {
-    return length(compl);
-}
-
-// coonsiderusing nonlinear (e.g., logarithmic) scale
-float computeColorIteration(float iter) {
+// coonsider using nonlinear (e.g., logarithmic) scale
+float computeColorIteration(int iter) {
     float color;
-    if (iter == n_iterations - 1) {
+    if (iter == n_iterations) {
         // last iteration - always black color
         color = 0.0;
     }
     else {
-        color = iter / n_iterations;
+        // important - cast to float before the divison
+        color = float(iter) / float(n_iterations);
     }
     return color;
 }
@@ -50,7 +44,7 @@ void main()
     for (iter; iter < n_iterations; iter++) {
         z_value_iterated = mandelbrotFunc(z_value_iterated, complex_val);
 
-        if (complexAbsNaive(z_value_iterated) > threshold) {
+        if (length(z_value_iterated) > threshold) {
             break;
         }
     }

@@ -58,12 +58,12 @@ namespace mandelbrot {
             float imag_max) {
         std::vector<float> complex_set;
 
-        for (int i = 0; i < size_y; i++) {
-            auto imag_interpolation_frac = static_cast<float>(i / (size_y - 1.0));
+        for (int i_row = 0; i_row < size_y; i_row++) {
+            auto imag_interpolation_frac = static_cast<float>( static_cast<float>(i_row) / (size_y - 1.0));
             float imag_value = mandelbrot::interpolate(imag_min, imag_max, imag_interpolation_frac);
 
-            for (int j = 0; j < size_x; ++j) {
-                auto real_interpolation_frac = static_cast<float>(j / ((size_x) - 1.0));
+            for (int i_col = 0; i_col < size_x; ++i_col) {
+                auto real_interpolation_frac = static_cast<float>(static_cast<float>(i_col) / ((size_x) - 1.0));
                 float real_value = mandelbrot::interpolate(real_min, real_max, real_interpolation_frac);
 
                 complex_set.push_back(real_value);
