@@ -118,7 +118,7 @@ int main(int, char **) {
 
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, width, height, 0, GL_RG, GL_FLOAT, complex_set.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, complex_set.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // -------------------
