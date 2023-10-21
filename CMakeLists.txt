@@ -11,6 +11,9 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+# general-purpose libs
+find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
 # ------------------------- OpenCV image generation build --------------------
 # find OpenCV
 find_package(OpenCV REQUIRED)
@@ -46,7 +49,7 @@ add_executable(
         src/cpp/mandelbrot.hpp
         src/cpp/utilities_shaders.hpp
 )
-target_link_libraries(render_mandelbrot_opengl_shader glfw OpenGL::GL GLEW::GLEW)
+target_link_libraries(render_mandelbrot_opengl_shader glfw OpenGL::GL GLEW::GLEW spdlog::spdlog_header_only)
 
 # ------------------------- IMGUI render build -----------------------
 # Dear ImGui

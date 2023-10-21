@@ -14,20 +14,20 @@ static void glfw_error_callback(int error, const char *description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::steady_clock::now();
-int fpsCount = 0;
+std::chrono::time_point<std::chrono::steady_clock> time_last = std::chrono::steady_clock::now();
+int fps_count = 0;
 int fps = 0;
 
 void get_fps() {
     auto currentTime = std::chrono::steady_clock::now();
 
-    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - lastTime).count();
-    ++fpsCount;
+    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - time_last).count();
+    ++fps_count;
 
     if (elapsedTime > 1000000000) {
-        lastTime = currentTime;
-        fps = fpsCount;
-        fpsCount = 0;
+        time_last = currentTime;
+        fps = fps_count;
+        fps_count = 0;
 
         printf("%d fps\n", fps); // print out fps in every second (or you can use it elsewhere)
     }
@@ -120,7 +120,7 @@ int main(int, char **) {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
     // Position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
     glEnableVertexAttribArray(0);
     // Texture coord attribute
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
@@ -138,9 +138,8 @@ int main(int, char **) {
 
         get_fps();
 
-
-        glViewport(0, 0, width,
-                   height); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+        // Render on the whole framebuffer, complete from the lower left corner to the upper right
+        glViewport(0, 0, width, height);
 
         glClear(GL_COLOR_BUFFER_BIT);
 
