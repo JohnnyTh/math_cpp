@@ -4,6 +4,8 @@
 #include <chrono>
 #include <cstdio>
 
+#include <spdlog/spdlog.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -11,38 +13,39 @@
 #include "src/cpp/utilities_shaders.hpp"
 
 static void glfw_error_callback(int error, const char *description) {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+    spdlog::error("GLFW Error {}: {}", error, description);
 }
 
-std::chrono::time_point<std::chrono::steady_clock> lastTime =
-        std::chrono::steady_clock::now();
-int fpsCount = 0;
+std::chrono::time_point<std::chrono::steady_clock> time_last = std::chrono::steady_clock::now();
+
+int fps_count = 0;
 int fps = 0;
 
 void get_fps() {
-    auto currentTime = std::chrono::steady_clock::now();
+    auto time_current = std::chrono::steady_clock::now();
 
-    const auto elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            currentTime - lastTime)
-            .count();
-    ++fpsCount;
+    const auto time_elapsed = (
+            std::chrono::duration_cast<std::chrono::nanoseconds>(time_current - time_last)
+                    .count()
+    );
+    ++fps_count;
 
-    if (elapsedTime > 1000000000) {
-        lastTime = currentTime;
-        fps = fpsCount;
-        fpsCount = 0;
+    if (time_elapsed > 1000000000) {
+        time_last = time_current;
+        fps = fps_count;
+        fps_count = 0;
 
-        printf("%d fps\n",
-               fps); // print out fps in every second (or you can use it elsewhere)
+        spdlog::info("fps: {}", fps);
     }
 }
 
 int main(int, char **) {
+    spdlog::set_level(spdlog::level::debug);
     // Initialise GLFW
     glfwSetErrorCallback(glfw_error_callback);
 
     if (glfwInit() != 1) {
-        fprintf(stderr, "Failed to initialize GLFW\n");
+        spdlog::error("Failed to initialize GLFW");
         return -1;
     }
 
@@ -82,9 +85,10 @@ int main(int, char **) {
     window = glfwCreateWindow(width, height, "Mandelbrot render", nullptr, nullptr);
 
     if (window == nullptr) {
-        fprintf(stderr, "Failed to open GLFW window. "
-                        "If you have an Intel GPU, they are not 3.3 compatible."
-                        "\n");
+        spdlog::error(
+                "Failed to open GLFW window. "
+                "If you have an Intel GPU, they are not 3.3 compatible."
+        );
         glfwTerminate();
         return -1;
     }
@@ -93,10 +97,11 @@ int main(int, char **) {
     // enable GLEW
     glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
-        fprintf(stderr, "Failed to initialize GLEW\n");
+        spdlog::error("Failed to initialize GLEW");
         return -1;
     }
     glfwGetFramebufferSize(window, &width, &height);
+    spdlog::info("Got frame buffer size: width={}, height={}", width, height);
 
     GLuint shaderProgram = utils_shaders::LoadShaders("vertex.vert", "fragment_mb.frag");
 
@@ -110,14 +115,14 @@ int main(int, char **) {
     int n_iterations_loc = glGetUniformLocation(shaderProgram, "n_iterations");
 
     // ------------ create 2D texture to store set of complex values
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
     std::vector<float> complex_set = mandelbrot::gen_complex_set_2_shader(
             width, height, real_min, real_max, imag_min, imag_max
     );
+    mandelbrot::print_complex_set_bounds(complex_set, width, height);
 
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
     glTexImage2D(
@@ -127,8 +132,7 @@ int main(int, char **) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // -------------------
 
-
-    // VBO definition
+    // --------- VBO definition
     GLuint VBO, EBO;
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -139,7 +143,7 @@ int main(int, char **) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    // VAO definition
+    // --------- VAO definition
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
 
@@ -159,7 +163,7 @@ int main(int, char **) {
     // Ensure we can capture the escape key being pressed below
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-
+    // TODO: add reset button
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0) {
 
@@ -171,27 +175,32 @@ int main(int, char **) {
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             // imag += imag_diff;
             mandelbrot::complex_set_adjust_imag(complex_set, imag_delta);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
             // imag -= imag_diff;
             mandelbrot::complex_set_adjust_imag(complex_set, -imag_delta);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
             // real -= real_delta;
             mandelbrot::complex_set_adjust_real(complex_set, -real_delta);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
             // real += real_delta;
             mandelbrot::complex_set_adjust_real(complex_set, real_delta);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             is_complex_set_modified = true;
         }
         if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
             // zoom out (increase all values)
             float scale_adjust = 1 + scale_delta;
             mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             real_delta = real_delta * scale_adjust;
             imag_delta = imag_delta * scale_adjust;
             is_complex_set_modified = true;
@@ -200,6 +209,7 @@ int main(int, char **) {
             // zoom in (decrease all values)
             float scale_adjust = 1 - scale_delta;
             mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            mandelbrot::print_complex_set_bounds(complex_set, width, height);
             real_delta = real_delta * scale_adjust;
             imag_delta = imag_delta * scale_adjust;
             is_complex_set_modified = true;

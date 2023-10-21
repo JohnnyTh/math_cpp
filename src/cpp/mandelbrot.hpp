@@ -3,6 +3,8 @@
 #include <istream>
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+
 #include "utilities.hpp"
 
 namespace mandelbrot {
@@ -42,12 +44,12 @@ namespace mandelbrot {
     }
 
     std::vector<float> gen_complex_set_2_shader(
-            int size_x,
-            int size_y,
-            float real_min,
-            float real_max,
-            float imag_min,
-            float imag_max) {
+            const int &size_x,
+            const int &size_y,
+            const float &real_min,
+            const float &real_max,
+            const float &imag_min,
+            const float &imag_max) {
         std::vector<float> complex_set;
 
         for (int i_row = 0; i_row < size_y; i_row++) {
@@ -130,21 +132,21 @@ namespace mandelbrot {
         return greyscale_values;
     }
 
-    void complex_set_adjust_real(std::vector<float> &complex_set, float real_delta) {
+    void complex_set_adjust_real(std::vector<float> &complex_set, const float &real_delta) {
         int n_elems = static_cast<int>(complex_set.size());
         for (int i = 0; i < n_elems; i += 2) {
             complex_set[i] += real_delta;
         }
     }
 
-    void complex_set_adjust_imag(std::vector<float> &complex_set, float imag_delta) {
+    void complex_set_adjust_imag(std::vector<float> &complex_set, const float &imag_delta) {
         int n_elems = static_cast<int>(complex_set.size());
         for (int i = 1; i < n_elems; i += 2) {
             complex_set[i] += imag_delta;
         }
     }
 
-    void complex_set_adjust_scale(std::vector<float> &complex_set, float scale) {
+    void complex_set_adjust_scale(std::vector<float> &complex_set, const float &scale) {
         if (complex_set.empty()) {
             std::cerr << "Warning: Input vector is empty." << std::endl;
             return;
@@ -180,4 +182,28 @@ namespace mandelbrot {
         (void) printf("\n");
     }
 
+    void print_complex_set_bounds(const std::vector<float> &complex_set, const int &width, const int &height) {
+        // bl - bottom left
+        // br - bottom right
+        // tl - top left
+        // tr - top right
+        float real_bl = complex_set.at(0);
+        float imag_bl = complex_set.at(1);
+
+        float real_br = complex_set.at((width * 2) - 2);
+        float imag_br = complex_set.at((width * 2) - 1);
+
+        float real_tl = complex_set.at((width * (height - 1) * 2));
+        float imag_tl = complex_set.at((width * (height - 1) * 2) + 1);
+
+        float real_tr = complex_set.at((width * height * 2) - 2);
+        float imag_tr = complex_set.at((width * height * 2) - 1);
+
+        spdlog::debug("Complex set bounds: BL=({}r {}i), BR=({}r {}i), TL=({}r {}i), TR=({}r {}i)",
+                      real_bl, imag_bl,
+                      real_br, imag_br,
+                      real_tl, imag_tl,
+                      real_tr, imag_tr
+        );
+    }
 }
