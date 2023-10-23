@@ -167,21 +167,6 @@ namespace mandelbrot {
         }
     }
 
-    void print_complex_set(const std::vector<std::complex<double>> &complex_set) {
-        (void) printf("[");
-        for (const auto &complex_num: complex_set) {
-            (void) printf("(%f, %f), ", complex_num.real(), complex_num.imag());
-        }
-        (void) printf("]\n");
-    }
-
-    void print_vector(const std::vector<int> &vec) {
-        for (int i: vec) {
-            (void) printf("%d ", i);
-        }
-        (void) printf("\n");
-    }
-
     void print_complex_set_bounds(const std::vector<float> &complex_set, const int &width, const int &height) {
         // bl - bottom left
         // br - bottom right

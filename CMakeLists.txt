@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # general-purpose libs
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(cxxopts REQUIRED)
 # ------------------------- OpenCV image generation build --------------------
 # find OpenCV
 find_package(OpenCV REQUIRED)
@@ -26,7 +27,7 @@ add_executable(
         src/cpp/utilities_opencv.hpp
 )
 # link OpenCV
-target_link_libraries(render_mandelbrot_opencv_img ${OpenCV_LIBS})
+target_link_libraries(render_mandelbrot_opencv_img ${OpenCV_LIBS} spdlog::spdlog_header_only cxxopts::cxxopts)
 # ------------------------- OpenGl render build --------------------
 find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
