@@ -36,21 +36,4 @@ namespace math_cpp_utils {
         }
         return color;
     }
-
-    void replace_value_with_another(std::vector<int> &values, int val_to_replace, int val_new) {
-        int n_values = static_cast<int>(values.size());
-
-        for (int i = 0; i < n_values; i++) {
-            auto value = values[i];
-
-            if (value == val_to_replace) {
-                values[i] = val_new;
-            }
-        }
-    }
-
-    void print_time_from_start(const char *msg, std::chrono::time_point<std::chrono::system_clock> start) {
-        std::chrono::duration<double> elapsed_seconds = std::chrono::high_resolution_clock::now() - start;
-        (void) printf("%s time: %.9f s.\n", msg, elapsed_seconds.count());
-    }
 }
