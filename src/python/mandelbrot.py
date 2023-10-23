@@ -1,10 +1,14 @@
+import typing
+
 import numpy as np
 import matplotlib as mpl
 
 colormap = mpl.colormaps["turbo"]
 
 
-def mandelbrot(z_value: float, complex_set: np._typing.NDArray) -> np._typing.NDArray:
+def mandelbrot(
+    z_value: typing.Union[float, complex], complex_set: np._typing.NDArray
+) -> np._typing.NDArray:
     return z_value**2 + complex_set
 
 
@@ -22,12 +26,12 @@ def gen_complex_set(
     values_real = np.linspace(min_real, max_real, dim_x)
     values_imag = np.linspace(min_imag, max_imag, dim_y)
 
-    set_ = np.zeros((dim_y, dim_x)).astype(np.complex_)
+    complex_set = np.zeros((dim_y, dim_x)).astype(np.complex_)
     for idx_col in range(dim_y):
         for idx_row in range(dim_x):
-            set_[idx_col, idx_row] = values_real[idx_row] + values_imag[idx_col] * 1j
+            complex_set[idx_col, idx_row] = values_real[idx_row] + values_imag[idx_col] * 1j
 
-    return set_
+    return complex_set
 
 
 def mandelbrot_sequence(
