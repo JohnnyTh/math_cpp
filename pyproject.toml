@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "math-cpp"
+version = "0.1.0"
+description = ""
+authors = ["Maksym.Tatariants <userboxj@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10.12"
+numpy = "1.26"
+opencv-python = "~4.8"
+matplotlib = "~3.8"
+seaborn = "0.13.0"
+scikit-image = "0.22.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
