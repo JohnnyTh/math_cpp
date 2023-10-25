@@ -81,3 +81,8 @@ mkdir "build"  \
 ```
 
 ## Run
+
+Image render with C++
+```bash
+./render_mandelbrot_opencv_img -p "mandelbrot.png" -i 50 -t 50 --imin "-1.1" --imax 1.1 --rmin "-2.5" --rmax="1.0"
+```
