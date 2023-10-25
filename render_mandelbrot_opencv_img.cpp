@@ -2,7 +2,9 @@
 
 #include <opencv2/imgcodecs.hpp>
 #include <cxxopts.hpp>
+#include "spdlog/spdlog.h"
 
+#include "src/cpp/timer.hpp"
 #include "src/cpp/mandelbrot.hpp"
 #include "src/cpp/utilities_opencv.hpp"
 
@@ -12,17 +14,17 @@ int main(int argc, char *argv[]) {
     options.add_options()
             ("w,width", "Image width", cxxopts::value<int>()->default_value("1980"))
             ("h,height", "Image height", cxxopts::value<int>()->default_value("1080"))
-            ("rmin,real_min", "Real number minimum", cxxopts::value<double>()->default_value("-3.0"))
+            ("rmin,real_min", "Real number minimum", cxxopts::value<double>()->default_value("-2.5"))
             ("rmax,real_max", "Real number maximum", cxxopts::value<double>()->default_value("1.0"))
-            ("imin,imag_min", "Imaginary number minimum", cxxopts::value<double>()->default_value("-1.5"))
-            ("imax,imag_max", "Imaginary number maximum", cxxopts::value<double>()->default_value("1.5"))
+            ("imin,imag_min", "Imaginary number minimum", cxxopts::value<double>()->default_value("-1.1"))
+            ("imax,imag_max", "Imaginary number maximum", cxxopts::value<double>()->default_value("1.1"))
             ("i,n_iterations", "Number of iterations", cxxopts::value<int>()->default_value("35"))
             ("t,threshold", "Abs value threshold", cxxopts::value<double>()->default_value("6.0"))
             ("p,img_p", "Image path", cxxopts::value<std::string>()->default_value("mandelbrot.png"));
 
     auto result = options.parse(argc, argv);
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto t_0 = std::chrono::high_resolution_clock::now();
 
     int width = result["width"].as<int>();
     int height = result["height"].as<int>();
@@ -35,37 +37,31 @@ int main(int argc, char *argv[]) {
     int n_iterations = result["n_iterations"].as<int>();
     double threshold = result["threshold"].as<double>();
 
-    spdlog::info("Begin mandelbrot image generation");
-
-    auto complex_set = mandelbrot::gen_complex_set(width, height, real_min, real_max, imag_min, imag_max);
-    spdlog::info("Done gen_complex_set");
-
-    // check sequence condition (divergence to infinity for each value)
-    std::vector<int> threshold_crossed_at_iter = mandelbrot::mandelbrot_sequence(complex_set, threshold, n_iterations);
-    spdlog::info("Done mandelbrot_sequence");
-
-    std::vector<int> greyscale_values;
-    for (const auto &iter: threshold_crossed_at_iter) {
-        int greyscale_color = math_cpp_utils::assign_greyscale_color_based_on_value(
-                iter,
-                0.0,
-                n_iterations,
-                255.0,
-                0
-        );
-        greyscale_values.push_back(greyscale_color);
-    }
-
-    cv::Mat greyscale_mat = math_cpp_utils_opencv::get_greyscale_mat(greyscale_values, width, height);
-    spdlog::info("Done postprocess");
-
-    //mandelbrot::print_complex_set(complex_set);
-    //mandelbrot::print_vector(threshold_crossed_at_iter);
     std::string img_name = result["img_p"].as<std::string>();
 
-    spdlog::info("Save image at: {}", img_name);
-    (void) cv::imwrite(img_name, greyscale_mat);
+    timer::Timer timer;
 
-    spdlog::info("Done finish program");
+    spdlog::info("Begin mandelbrot set image generation");
+
+    auto t_1 = std::chrono::high_resolution_clock::now();
+    auto complex_set = mandelbrot::gen_complex_set(width, height, real_min, real_max, imag_min, imag_max);
+    timer.timeit("gen_complex_set()", t_1);
+
+    // check sequence condition (divergence to infinity for each value)
+    auto t_2 = std::chrono::high_resolution_clock::now();
+    std::vector<int> mandelbrot_set = mandelbrot::mandelbrot_sequence(complex_set, threshold, n_iterations);
+    timer.timeit("mandelbrot_sequence()", t_2);
+
+    auto t_3 = std::chrono::high_resolution_clock::now();
+    cv::Mat greyscale_mat = math_cpp_utils_opencv::get_greyscale_mat(mandelbrot_set, width, height);
+    timer.timeit("get_greyscale_mat()", t_3);
+
+    spdlog::info("Save image at: {}", img_name);
+    auto t_4 = std::chrono::high_resolution_clock::now();
+    (void) cv::imwrite(img_name, greyscale_mat);
+    timer.timeit("cv::imwrite()", t_4);
+
+    timer.timeit("main()", t_0);
+    timer.logTime();
     return 0;
 }

@@ -39,17 +39,16 @@ namespace mandelbrot {
                 complex_set.push_back(complex_value);
             }
         }
-
         return complex_set;
     }
 
     std::vector<float> gen_complex_set_2_shader(
-            const int &size_x,
-            const int &size_y,
-            const float &real_min,
-            const float &real_max,
-            const float &imag_min,
-            const float &imag_max) {
+            int size_x,
+            int size_y,
+            float real_min,
+            float real_max,
+            float imag_min,
+            float imag_max) {
         std::vector<float> complex_set;
 
         for (int i_row = 0; i_row < size_y; i_row++) {
@@ -72,32 +71,38 @@ namespace mandelbrot {
     }
 
     std::vector<int> mandelbrot_sequence(
-            std::vector<std::complex<double>> &complex_set,
+            const std::vector<std::complex<double>> &complex_set,
             double threshold,
             int n_iterations
     ) {
+        // outputs greyscale color for each pixel in mandelbrot set
         auto n_values = static_cast<int>(complex_set.size());
 
-        std::vector<int> threshold_crossed_at_iteration(n_values, -1);
+        std::vector<int> mandelbrot_set;
+        mandelbrot_set.reserve(n_values);
 
         for (int idx_value = 0; idx_value < n_values; idx_value++) {
 
             auto complex_value = complex_set[idx_value];
             std::complex<double> z_value_iterated(0.0);
 
-            for (int idx_iter = 0; idx_iter < n_iterations; idx_iter++) {
-
+            int idx_iter = 0;
+            for (; idx_iter < n_iterations; idx_iter++) {
                 // if it is first iteration, use fc(0) = z**2 + c
                 // on other iterations, use fc(fc(0)), or fc(fc(fc(0))), etc ...
                 z_value_iterated = mandelbrot_func(z_value_iterated, complex_value);
 
-                if (abs(z_value_iterated) > threshold) {
-                    threshold_crossed_at_iteration[idx_value] = idx_iter;
+                if (std::abs(z_value_iterated) > threshold) {
                     break;
                 }
             }
+            if (idx_iter == n_iterations) {
+                mandelbrot_set.push_back(0); // black
+            } else {
+                mandelbrot_set.push_back(static_cast<int>(255 * (static_cast<double>(idx_iter) / n_iterations)));
+            }
         }
-        return threshold_crossed_at_iteration;
+        return mandelbrot_set;
     }
 
     std::vector<float> gen_mandelbrot_greyscale(

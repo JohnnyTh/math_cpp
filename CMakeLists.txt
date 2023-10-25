@@ -25,6 +25,7 @@ add_executable(
         src/cpp/mandelbrot.hpp
         src/cpp/utilities.hpp
         src/cpp/utilities_opencv.hpp
+        src/cpp/timer.hpp
 )
 # link OpenCV
 target_link_libraries(render_mandelbrot_opencv_img ${OpenCV_LIBS} spdlog::spdlog_header_only cxxopts::cxxopts)
