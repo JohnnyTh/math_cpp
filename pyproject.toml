@@ -6,7 +6,7 @@ authors = ["Maksym.Tatariants <userboxj@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.10.12"
+python = "~3.10"
 numpy = "1.26"
 opencv-python = "~4.8"
 matplotlib = "~3.8"
