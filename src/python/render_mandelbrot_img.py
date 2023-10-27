@@ -8,7 +8,12 @@ import numpy as np
 # enable imports when running from project root
 sys.path.append(os.environ["PWD"])
 
-from src.python.mandelbrot import gen_complex_set, mandelbrot_sequence
+from src.python.mandelbrot import (gen_complex_set, 
+                                   gen_complex_v1,
+                                   gen_complex_v2,
+                                   mandelbrot_sequence,
+                                   mandelbrot_sequence_v1,
+                                   mandelbrot_sequence_v2,)
 
 
 def main():
@@ -27,7 +32,7 @@ def main():
 
     mandelbrot_set = np.zeros((dim_y, dim_x, 3), dtype=np.uint8)
 
-    complex_set = gen_complex_set(
+    complex_set = gen_complex_v2(
         dim_x,
         dim_y,
         min_real=min_real,
@@ -35,7 +40,7 @@ def main():
         min_imag=min_imag,
         max_imag=max_imag,
     )
-    mandelbrot_set = mandelbrot_sequence(
+    mandelbrot_set = mandelbrot_sequence_v2(
         n_iterations, complex_set, mandelbrot_set, threshold=threshold
     )
 
