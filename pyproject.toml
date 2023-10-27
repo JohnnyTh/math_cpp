@@ -12,6 +12,8 @@ opencv-python = "~4.8"
 matplotlib = "~3.8"
 seaborn = "0.13.0"
 scikit-image = "0.22.0"
+moderngl = "^5.8.2"
+moderngl-window = "^2.4.5"
 
 [build-system]
 requires = ["poetry-core"]
