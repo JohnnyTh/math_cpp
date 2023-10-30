@@ -12,7 +12,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # general-purpose libs
-find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(cxxopts REQUIRED)
 # ------------------------- OpenCV image generation build --------------------
@@ -51,8 +50,15 @@ add_executable(
         src/cpp/mandelbrot.hpp
         src/cpp/utilities_shaders.hpp
 )
-target_link_libraries(render_mandelbrot_opengl_shader glfw OpenGL::GL GLEW::GLEW spdlog::spdlog_header_only)
-
+target_link_libraries(
+        render_mandelbrot_opengl_shader
+        ${OpenCV_LIBS}
+        glfw
+        OpenGL::GL
+        GLEW::GLEW
+        spdlog::spdlog_header_only
+        cxxopts::cxxopts
+)
 # ------------------------- IMGUI render build -----------------------
 # Dear ImGui
 set(IMGUI_DIR submodules/imgui)

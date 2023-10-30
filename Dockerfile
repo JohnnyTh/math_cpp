@@ -31,18 +31,6 @@ RUN git clone https://github.com/gabime/spdlog.git \
 	&& cd ../..  \
     && rm -rf spdlog
 
-# Install fmt
-RUN git clone https://github.com/fmtlib/fmt.git \
-    && cd fmt \
-    && git checkout 8.1.1 \
-    && mkdir .build \
-    && cd .build \
-    && cmake -DFMT_TEST=OFF .. \
-    && make -j 12 \
-    && make install \
-    && cd ../.. \
-    && rm -rf fmt
-
 # Install cxxopts
 RUN git clone https://github.com/jarro2783/cxxopts.git \
     && cd cxxopts \

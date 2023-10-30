@@ -28,7 +28,7 @@ float computeColorIteration(int iter) {
     }
     else {
         // important - cast to float before the divison
-        color = float(iter) / float(n_iterations);
+        color = log(float(iter)) / log(float(n_iterations));
     }
     return color;
 }

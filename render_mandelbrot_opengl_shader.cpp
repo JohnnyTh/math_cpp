@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include <spdlog/spdlog.h>
+#include <cxxopts.hpp>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -20,6 +21,11 @@ std::chrono::time_point<std::chrono::steady_clock> time_last = std::chrono::stea
 
 int fps_count = 0;
 int fps = 0;
+
+float real_delta = 0.05f;
+float imag_delta = 0.05f;
+float scale_delta = 0.05f;
+
 
 void get_fps() {
     auto time_current = std::chrono::steady_clock::now();
@@ -39,8 +45,32 @@ void get_fps() {
     }
 }
 
-int main(int, char **) {
+int main(int argc, char *argv[]) {
     spdlog::set_level(spdlog::level::debug);
+
+    cxxopts::Options options{argv[0], "Mandelbrot set image rendering tool"};
+    options.add_options()
+            ("w,width", "Image width", cxxopts::value<int>()->default_value("1980"))
+            ("h,height", "Image height", cxxopts::value<int>()->default_value("1080"))
+            ("rmin,real_min", "Real number minimum", cxxopts::value<float>()->default_value("-2.5"))
+            ("rmax,real_max", "Real number maximum", cxxopts::value<float>()->default_value("1.0"))
+            ("imin,imag_min", "Imaginary number minimum", cxxopts::value<float>()->default_value("-1.1"))
+            ("imax,imag_max", "Imaginary number maximum", cxxopts::value<float>()->default_value("1.1"))
+            ("i,n_iterations", "Number of iterations", cxxopts::value<int>()->default_value("1000"))
+            ("t,threshold", "Abs value threshold", cxxopts::value<float>()->default_value("6.0"));
+    auto result = options.parse(argc, argv);
+
+    int width = result["width"].as<int>();
+    int height = result["height"].as<int>();
+
+    float real_min = result["real_min"].as<float>();
+    float real_max = result["real_max"].as<float>();
+    float imag_min = result["imag_min"].as<float>();
+    float imag_max = result["imag_max"].as<float>();
+
+    int n_iterations = result["n_iterations"].as<int>();
+    float threshold = result["threshold"].as<float>();
+
     // Initialise GLFW
     glfwSetErrorCallback(glfw_error_callback);
 
@@ -49,39 +79,15 @@ int main(int, char **) {
         return -1;
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);               // 4x antialiasing
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // We want OpenGL 3.3
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Apple compatibility
-    glfwWindowHint(GLFW_OPENGL_PROFILE,
-                   GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(
+            GLFW_OPENGL_PROFILE,
+            GLFW_OPENGL_CORE_PROFILE
+    );
 
-    float vertices[] = {
-            -1.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
-            1.0f, -1.0f, 1.0f, 0.0f, // Bottom-right
-            -1.0f, 1.0f, 0.0f, 1.0f, // Top-left
-            1.0f, 1.0f, 1.0f, 1.0f, // Top-right
-    };
-    unsigned int indices[] = {0, 1, 2, 1, 2, 3};
-
-    float real_delta = 0.05f;
-    float imag_delta = 0.05f;
-    float scale_delta = 0.05f;
-
-    int width = 1980;
-    int height = 1080;
-
-    float real_min = -3.0f;
-    float real_max = 1.0f;
-    float imag_min = -1.5f;
-    float imag_max = 1.5f;
-
-    int n_iterations = 35;
-    float threshold = 6.0f;
-
-    // Open a window and create its OpenGL context
-    GLFWwindow *window; // (In the accompanying source code, this variable is
-    // global for simplicity)
+    GLFWwindow *window;
     window = glfwCreateWindow(width, height, "Mandelbrot render", nullptr, nullptr);
 
     if (window == nullptr) {
@@ -92,27 +98,58 @@ int main(int, char **) {
         glfwTerminate();
         return -1;
     }
-    glfwMakeContextCurrent(window); // Initialize GLEW
+    glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    glfwGetFramebufferSize(window, &width, &height);
+    spdlog::info("framebuffer width={}, height={}", width, height);
 
     // enable GLEW
-    glewExperimental = GL_TRUE;
     if (glewInit() != GLEW_OK) {
         spdlog::error("Failed to initialize GLEW");
         return -1;
     }
-    glfwGetFramebufferSize(window, &width, &height);
-    spdlog::info("Got frame buffer size: width={}, height={}", width, height);
 
-    GLuint shaderProgram = utils_shaders::LoadShaders("vertex.vert", "fragment_mb.frag");
+    // --------- VBO definition
+    GLuint VBO, EBO;
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
-    if (shaderProgram == 0) {
-        fprintf(stderr, "Error loading shader");
+    float vertices[] = {
+            -1.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
+            1.0f, -1.0f, 1.0f, 0.0f, // Bottom-right
+            -1.0f, 1.0f, 0.0f, 1.0f, // Top-left
+            1.0f, 1.0f, 1.0f, 1.0f, // Top-right
+    };
+    unsigned int indices[] = {0, 1, 2, 1, 2, 3};
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    // --------- VAO definition
+    GLuint VAO;
+    glGenVertexArrays(1, &VAO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // Position attribute
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
+    glEnableVertexAttribArray(0);
+    // texture coord attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBindVertexArray(0);
+
+    GLuint shader_program = utils_shaders::LoadShaders("vertex.vert", "fragment_mb.frag");
+
+    if (shader_program == 0) {
+        spdlog::error("Error loading shader");
         return -1;
     }
-
-    // ------------ get locations of dynamic uniform parameters
-    int threshold_loc = glGetUniformLocation(shaderProgram, "threshold");
-    int n_iterations_loc = glGetUniformLocation(shaderProgram, "n_iterations");
 
     // ------------ create 2D texture to store set of complex values
     std::vector<float> complex_set = mandelbrot::gen_complex_set_2_shader(
@@ -132,36 +169,9 @@ int main(int, char **) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     // -------------------
 
-    // --------- VBO definition
-    GLuint VBO, EBO;
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    // --------- VAO definition
-    GLuint VAO;
-    glGenVertexArrays(1, &VAO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Position attribute
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) nullptr);
-    glEnableVertexAttribArray(0);
-    // texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *) (2 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBindVertexArray(0);
-
-    // Ensure we can capture the escape key being pressed below
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+    // ------------ get locations of dynamic uniform parameters
+    int threshold_loc = glGetUniformLocation(shader_program, "threshold");
+    int n_iterations_loc = glGetUniformLocation(shader_program, "n_iterations");
 
     // TODO: add reset button
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
@@ -228,7 +238,7 @@ int main(int, char **) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
 
-        glUseProgram(shaderProgram);
+        glUseProgram(shader_program);
 
         // set uniform (shared) params
         glUniform1f(threshold_loc, threshold);
@@ -249,7 +259,7 @@ int main(int, char **) {
     // Delete vertex array
     glDeleteVertexArrays(1, &VAO);
     // Delete shader program
-    glDeleteProgram(shaderProgram);
+    glDeleteProgram(shader_program);
     // Delete textures
     glDeleteTextures(1, &texture);
     // terminate GLFW and exiting
