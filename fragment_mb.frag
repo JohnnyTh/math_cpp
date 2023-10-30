@@ -3,7 +3,9 @@ out vec4 FragColor;
 
 in vec2 TexCoord;
 
+uniform sampler1D colormap;
 uniform sampler2D complexSet;
+
 uniform int n_iterations;
 uniform float threshold;
 
@@ -20,15 +22,26 @@ vec2 mandelbrotFunc(vec2 z_val, vec2 complex_val) {
 
 
 // coonsider using nonlinear (e.g., logarithmic) scale
-float computeColorIteration(int iter) {
-    float color;
+vec3 computeColorIteration(int iter) {
+    vec3 color;
     if (iter == n_iterations) {
         // last iteration - always black color
-        color = 0.0;
+        color = vec3(0.0, 0.0, 0.0);
     }
     else {
         // important - cast to float before the divison
-        color = log(float(iter)) / log(float(n_iterations));
+
+        // version 1: linear scale, greyscale:
+        //float color_ = float(iter) / float(n_iterations);
+        //color = vec3(color_, color_, color_);
+
+        // version 2: log scale, greyscale:
+//                 float color_ = log(float(iter)) / log(float(n_iterations));
+//                 color = vec3(color_, color_, color_);
+
+        //version 3: log scale, colormap:
+        float color_ = log(float(iter)) / log(float(n_iterations));
+        color = texture(colormap, color_).rgb;
     }
     return color;
 }
@@ -48,7 +61,7 @@ void main()
             break;
         }
     }
-    float color = computeColorIteration(iter);
+    vec3 color = computeColorIteration(iter);
 
-    FragColor = vec4(color, color, color, 1.0);
+    FragColor = vec4(color.r, color.g, color.b, 1.0);
 }
