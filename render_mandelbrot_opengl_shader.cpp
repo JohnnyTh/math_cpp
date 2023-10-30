@@ -2,7 +2,6 @@
 // Created by maksym on 18/10/23.
 //
 #include <chrono>
-#include <cstdio>
 
 #include <spdlog/spdlog.h>
 #include <cxxopts.hpp>
@@ -10,6 +9,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "src/cpp/colormaps.hpp"
 #include "src/cpp/mandelbrot.hpp"
 #include "src/cpp/utilities_shaders.hpp"
 
@@ -151,15 +151,15 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    // ------------ create 2D texture to store set of complex values
+    // ------------ create COMPLEX VALUES TEXTURE ----------------------------
     std::vector<float> complex_set = mandelbrot::gen_complex_set_2_shader(
             width, height, real_min, real_max, imag_min, imag_max
     );
     mandelbrot::print_complex_set_bounds(complex_set, width, height);
 
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    GLuint tex_complex;
+    glGenTextures(1, &tex_complex);
+    glBindTexture(GL_TEXTURE_2D, tex_complex);
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
     glTexImage2D(
@@ -167,12 +167,33 @@ int main(int argc, char *argv[]) {
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    // -------------------
+    // -------------------------------------------------------------
+
+    // --------------- create COLORMAP TEXTURE ------------------------------
+    int n_colors = sizeof(colormaps::cmap_gist_ncar_256) / (3 * sizeof(colormaps::cmap_gist_ncar_256[0]));
+
+    GLuint tex_colormap;
+    glGenTextures(1, &tex_colormap);
+    glBindTexture(GL_TEXTURE_1D, tex_colormap);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, n_colors, 0, GL_RGB, GL_FLOAT, colormaps::cmap_gist_ncar_256);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // ------------ get locations of dynamic uniform parameters
-    int threshold_loc = glGetUniformLocation(shader_program, "threshold");
-    int n_iterations_loc = glGetUniformLocation(shader_program, "n_iterations");
+    GLint loc_threshold = glGetUniformLocation(shader_program, "threshold");
+    GLint loc_n_iterations = glGetUniformLocation(shader_program, "n_iterations");
+    GLint loc_colormap = glGetUniformLocation(shader_program, "colormap");
+    GLint loc_complex_set = glGetUniformLocation(shader_program, "complexSet");
 
+    int tex_unit_complex_set = 1;
+    int tex_unit_colormap = 0;
+
+    GLenum err_setup = glGetError();
+    if (err_setup != 0) {
+        spdlog::error("Got !=0 error code from OpenGL: {}", err_setup);
+        return -1;
+
+    }
     // TODO: add reset button
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0) {
@@ -232,17 +253,19 @@ int main(int argc, char *argv[]) {
         // --------------------- Draw section -------------------------
         if (is_complex_set_modified) {
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_FLOAT, complex_set.data());
-
         }
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
         glUseProgram(shader_program);
 
-        // set uniform (shared) params
-        glUniform1f(threshold_loc, threshold);
-        glUniform1i(n_iterations_loc, n_iterations);
+        glActiveTexture(GL_TEXTURE0 + tex_unit_complex_set);
+        glBindTexture(GL_TEXTURE_2D, tex_complex);
+        glUniform1i(loc_complex_set, tex_unit_complex_set);
+
+        glActiveTexture(GL_TEXTURE0 + tex_unit_colormap);
+        glBindTexture(GL_TEXTURE_1D, tex_colormap);
+        glUniform1i(loc_colormap, tex_unit_colormap);
+
+        glUniform1f(loc_threshold, threshold);
+        glUniform1i(loc_n_iterations, n_iterations);
 
         glBindVertexArray(VAO);
 
@@ -261,7 +284,8 @@ int main(int argc, char *argv[]) {
     // Delete shader program
     glDeleteProgram(shader_program);
     // Delete textures
-    glDeleteTextures(1, &texture);
+    glDeleteTextures(1, &tex_complex);
+    glDeleteTextures(1, &tex_colormap);
     // terminate GLFW and exiting
     glfwTerminate();
     return 0;

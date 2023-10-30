@@ -3,6 +3,8 @@
 
 #include <GL/glew.h>
 
+#ifndef UTILITIES_SHADERS_HPP
+#define UTILITIES_SHADERS_HPP
 namespace utils_shaders {
     GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
         // Create the shaders
@@ -94,3 +96,5 @@ namespace utils_shaders {
         return ProgramID;
     }
 }
+
+#endif

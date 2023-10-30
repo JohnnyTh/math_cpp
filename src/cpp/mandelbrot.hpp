@@ -7,6 +7,9 @@
 
 #include "utilities.hpp"
 
+#ifndef MANDELBROT_HPP
+#define MANDELBROT_HPP
+
 namespace mandelbrot {
 
     template<typename T>
@@ -197,3 +200,5 @@ namespace mandelbrot {
         );
     }
 }
+
+#endif

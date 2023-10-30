@@ -49,6 +49,7 @@ add_executable(
         render_mandelbrot_opengl_shader.cpp
         src/cpp/mandelbrot.hpp
         src/cpp/utilities_shaders.hpp
+        src/cpp/colormaps.hpp
 )
 target_link_libraries(
         render_mandelbrot_opengl_shader
@@ -90,4 +91,5 @@ target_include_directories(render_mandelbrot_imgui PUBLIC submodules/imgui)
 add_executable(
         experiments
         experiments.cpp
+        src/cpp/colormaps.hpp
 )
