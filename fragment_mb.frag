@@ -1,6 +1,5 @@
 #version 330 core
 out vec4 FragColor;
-
 in vec2 TexCoord;
 
 uniform sampler1D colormap;
@@ -32,12 +31,12 @@ vec3 computeColorIteration(int iter) {
         // important - cast to float before the divison
 
         // version 1: linear scale, greyscale:
-        //float color_ = float(iter) / float(n_iterations);
-        //color = vec3(color_, color_, color_);
+//        float color_ = float(iter) / float(n_iterations);
+//        color = vec3(color_, color_, color_);
 
         // version 2: log scale, greyscale:
-//                 float color_ = log(float(iter)) / log(float(n_iterations));
-//                 color = vec3(color_, color_, color_);
+//         float color_ = log(float(iter)) / log(float(n_iterations));
+//         color = vec3(color_, color_, color_);
 
         //version 3: log scale, colormap:
         float color_ = log(float(iter)) / log(float(n_iterations));
