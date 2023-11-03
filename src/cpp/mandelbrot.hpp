@@ -175,6 +175,44 @@ namespace mandelbrot {
         }
     }
 
+    void complex_set_adjust_scale_centered(std::vector<float> &complex_set, const float &scale) {
+        if (complex_set.empty()) {
+            std::cerr << "Warning: Input vector is empty." << std::endl;
+            return;
+        }
+        float rmin = complex_set.at(0);
+        float rmax = complex_set.at(complex_set.size() - 2);
+
+        float imin = complex_set.at(1);
+        float imax = complex_set.at(complex_set.size() - 1);
+
+        float r_center = (rmin + rmax) / 2;
+        float i_center = (imin + imax) / 2;
+
+        for (size_t i = 0; i < complex_set.size(); i++) {
+            auto &elem = complex_set[i];
+            float result;
+
+            if (i % 2 == 0) {
+                // imag values
+                result = ((elem - r_center) * scale) + r_center;
+            } else {
+                // real values
+                result = ((elem - i_center) * scale) + i_center;
+            }
+            // Check for underflow and overflow
+            if (result < -std::numeric_limits<float>::max()) {
+                std::cerr << "Warning: Set scaling underflow." << std::endl;
+                elem = -std::numeric_limits<float>::max();
+            } else if (result > std::numeric_limits<float>::max()) {
+                std::cerr << "Warning: Set scaling overflow." << std::endl;
+                elem = std::numeric_limits<float>::max();
+            } else {
+                elem = result;
+            }
+        }
+    }
+
     void print_complex_set_bounds(const std::vector<float> &complex_set, const int &width, const int &height) {
         // bl - bottom left
         // br - bottom right

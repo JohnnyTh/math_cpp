@@ -22,9 +22,12 @@ std::chrono::time_point<std::chrono::steady_clock> time_last = std::chrono::stea
 int fps_count = 0;
 int fps = 0;
 
-float real_delta = 0.05f;
-float imag_delta = 0.05f;
-float scale_delta = 0.05f;
+float real_delta = 0.025f;
+float imag_delta = 0.025f;
+float real_delta_ = real_delta;
+float imag_delta_ = imag_delta;
+float scale_delta = 0.01f;
+int n_iters_delta = 5;
 
 
 void get_fps() {
@@ -56,7 +59,7 @@ int main(int argc, char *argv[]) {
             ("rmax,real_max", "Real number maximum", cxxopts::value<float>()->default_value("1.0"))
             ("imin,imag_min", "Imaginary number minimum", cxxopts::value<float>()->default_value("-1.1"))
             ("imax,imag_max", "Imaginary number maximum", cxxopts::value<float>()->default_value("1.1"))
-            ("i,n_iterations", "Number of iterations", cxxopts::value<int>()->default_value("1000"))
+            ("i,n_iterations", "Number of iterations", cxxopts::value<int>()->default_value("100"))
             ("t,threshold", "Abs value threshold", cxxopts::value<float>()->default_value("6.0"));
     auto result = options.parse(argc, argv);
 
@@ -67,6 +70,11 @@ int main(int argc, char *argv[]) {
     float real_max = result["real_max"].as<float>();
     float imag_min = result["imag_min"].as<float>();
     float imag_max = result["imag_max"].as<float>();
+
+    float real_min_ = real_min;
+    float real_max_ = real_max;
+    float imag_min_ = imag_min;
+    float imag_max_ = imag_max;
 
     int n_iterations = result["n_iterations"].as<int>();
     float threshold = result["threshold"].as<float>();
@@ -192,7 +200,6 @@ int main(int argc, char *argv[]) {
     if (err_setup != 0) {
         spdlog::error("Got !=0 error code from OpenGL: {}", err_setup);
         return -1;
-
     }
     // TODO: add reset button
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
@@ -203,6 +210,22 @@ int main(int argc, char *argv[]) {
         get_fps();
 
         // --------------------- Handle user controls -------------------------
+        if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) {
+            n_iterations = n_iterations + n_iters_delta;
+            spdlog::debug("N iterations: {}", n_iterations);
+        }
+        if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+            n_iterations = n_iterations - n_iters_delta;
+            spdlog::debug("N iterations: {}", n_iterations);
+        }
+        if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+            complex_set = mandelbrot::gen_complex_set_2_shader(
+                    width, height, real_min_, real_max_, imag_min_, imag_max_
+            );
+            real_delta = real_delta_;
+            imag_delta = imag_delta_;
+            spdlog::debug("RESET complex set!");
+        }
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
             // imag += imag_diff;
             mandelbrot::complex_set_adjust_imag(complex_set, imag_delta);
@@ -230,7 +253,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
             // zoom out (increase all values)
             float scale_adjust = 1 + scale_delta;
-            mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            mandelbrot::complex_set_adjust_scale_centered(complex_set, scale_adjust);
             mandelbrot::print_complex_set_bounds(complex_set, width, height);
             real_delta = real_delta * scale_adjust;
             imag_delta = imag_delta * scale_adjust;
@@ -239,7 +262,7 @@ int main(int argc, char *argv[]) {
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
             // zoom in (decrease all values)
             float scale_adjust = 1 - scale_delta;
-            mandelbrot::complex_set_adjust_scale(complex_set, scale_adjust);
+            mandelbrot::complex_set_adjust_scale_centered(complex_set, scale_adjust);
             mandelbrot::print_complex_set_bounds(complex_set, width, height);
             real_delta = real_delta * scale_adjust;
             imag_delta = imag_delta * scale_adjust;
