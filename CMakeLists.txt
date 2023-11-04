@@ -53,7 +53,6 @@ add_executable(
 )
 target_link_libraries(
         render_mandelbrot_opengl_shader
-        ${OpenCV_LIBS}
         glfw
         OpenGL::GL
         GLEW::GLEW

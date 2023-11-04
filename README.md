@@ -86,3 +86,8 @@ Image render with C++
 ```bash
 ./render_mandelbrot_opencv_img -p "mandelbrot.png" -i 50 -t 50 --imin "-1.1" --imax 1.1 --rmin "-2.5" --rmax="1.0"
 ```
+
+OpenGL render in a window
+```bash
+./render_mandelbrot_opengl_shader --rmin="-2.5" --imin="-1.1" --rmax="1.0" --imax="1.1" --n_iterations="200"
+```
