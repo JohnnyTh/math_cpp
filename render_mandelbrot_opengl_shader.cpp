@@ -27,7 +27,8 @@ float imag_delta = 0.025f;
 float real_delta_ = real_delta;
 float imag_delta_ = imag_delta;
 float scale_delta = 0.01f;
-int n_iters_delta = 5;
+int n_iters_delta = 1;
+int n_iters_delta_ = n_iters_delta;
 
 
 void get_fps() {
@@ -96,7 +97,12 @@ int main(int argc, char *argv[]) {
     );
 
     GLFWwindow *window;
-    window = glfwCreateWindow(width, height, "Mandelbrot render", nullptr, nullptr);
+    window = glfwCreateWindow(
+            glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
+            glfwGetVideoMode(glfwGetPrimaryMonitor())->height, "Mandelbrot render",
+            glfwGetPrimaryMonitor(),
+            nullptr
+    );
 
     if (window == nullptr) {
         spdlog::error(
@@ -108,7 +114,7 @@ int main(int argc, char *argv[]) {
     }
     glfwMakeContextCurrent(window);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-    glfwGetFramebufferSize(window, &width, &height);
+    // glfwGetFramebufferSize(window, &width, &height);
     spdlog::info("framebuffer width={}, height={}", width, height);
 
     // enable GLEW
@@ -173,17 +179,17 @@ int main(int argc, char *argv[]) {
     glTexImage2D(
             GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, complex_set.data()
     );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // -------------------------------------------------------------
 
     // --------------- create COLORMAP TEXTURE ------------------------------
-    int n_colors = sizeof(colormaps::cmap_gist_ncar_256) / (3 * sizeof(colormaps::cmap_gist_ncar_256[0]));
+    int n_colors = sizeof(colormaps::cmap_ocean_256) / (3 * sizeof(colormaps::cmap_ocean_256[0]));
 
     GLuint tex_colormap;
     glGenTextures(1, &tex_colormap);
     glBindTexture(GL_TEXTURE_1D, tex_colormap);
-    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, n_colors, 0, GL_RGB, GL_FLOAT, colormaps::cmap_gist_ncar_256);
+    glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB32F, n_colors, 0, GL_RGB, GL_FLOAT, colormaps::cmap_ocean_256);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -201,7 +207,6 @@ int main(int argc, char *argv[]) {
         spdlog::error("Got !=0 error code from OpenGL: {}", err_setup);
         return -1;
     }
-    // TODO: add reset button
     while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
            glfwWindowShouldClose(window) == 0) {
 
@@ -224,6 +229,7 @@ int main(int argc, char *argv[]) {
             );
             real_delta = real_delta_;
             imag_delta = imag_delta_;
+            n_iters_delta = n_iters_delta_;
             spdlog::debug("RESET complex set!");
         }
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
