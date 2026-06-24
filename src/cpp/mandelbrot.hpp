@@ -12,6 +12,27 @@
 
 namespace mandelbrot {
 
+    struct ViewParams {
+        double real_min, real_max, imag_min, imag_max;
+        double real_delta, imag_delta, scale_delta;
+
+        void pan_real(double d) { real_min += d; real_max += d; }
+        void pan_imag(double d) { imag_min += d; imag_max += d; }
+
+        void zoom(double scale) {
+            double r_center = (real_min + real_max) / 2.0;
+            double i_center = (imag_min + imag_max) / 2.0;
+            real_min = r_center + (real_min - r_center) * scale;
+            real_max = r_center + (real_max - r_center) * scale;
+            imag_min = i_center + (imag_min - i_center) * scale;
+            imag_max = i_center + (imag_max - i_center) * scale;
+            real_delta *= scale;
+            imag_delta *= scale;
+        }
+
+        void reset(const ViewParams &initial) { *this = initial; }
+    };
+
     template<typename T>
     typename std::enable_if<std::is_floating_point<T>::value, T>::type
     interpolate(T value_left, T value_right, T frac_right) {
@@ -45,22 +66,17 @@ namespace mandelbrot {
         return complex_set;
     }
 
-    std::vector<float> gen_complex_set_2_shader(
-            int size_x,
-            int size_y,
-            float real_min,
-            float real_max,
-            float imag_min,
-            float imag_max) {
+    std::vector<float> gen_complex_set_2_shader(int size_x, int size_y, const ViewParams &vp) {
         std::vector<float> complex_set;
+        complex_set.reserve(size_x * size_y * 2);
 
         for (int i_row = 0; i_row < size_y; i_row++) {
-            auto imag_interpolation_frac = static_cast<float>( static_cast<float>(i_row) / (size_y - 1.0));
-            float imag_value = mandelbrot::interpolate(imag_min, imag_max, imag_interpolation_frac);
+            double imag_frac = static_cast<double>(i_row) / (size_y - 1.0);
+            float imag_value = static_cast<float>(mandelbrot::interpolate(vp.imag_min, vp.imag_max, imag_frac));
 
             for (int i_col = 0; i_col < size_x; ++i_col) {
-                auto real_interpolation_frac = static_cast<float>(static_cast<float>(i_col) / ((size_x) - 1.0));
-                float real_value = mandelbrot::interpolate(real_min, real_max, real_interpolation_frac);
+                double real_frac = static_cast<double>(i_col) / (size_x - 1.0);
+                float real_value = static_cast<float>(mandelbrot::interpolate(vp.real_min, vp.real_max, real_frac));
 
                 complex_set.push_back(real_value);
                 complex_set.push_back(imag_value);
