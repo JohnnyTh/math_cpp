@@ -49,6 +49,7 @@ add_executable(
         render_mandelbrot_opengl_shader.cpp
         src/cpp/mandelbrot.hpp
         src/cpp/utilities_shaders.hpp
+        src/cpp/shaders_mandelbrot.hpp
         src/cpp/colormaps.hpp
 )
 target_link_libraries(

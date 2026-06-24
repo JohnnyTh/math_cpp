@@ -12,6 +12,7 @@
 #include "src/cpp/colormaps.hpp"
 #include "src/cpp/mandelbrot.hpp"
 #include "src/cpp/utilities_shaders.hpp"
+#include "src/cpp/shaders_mandelbrot.hpp"
 
 static void glfw_error_callback(int error, const char *description) {
     spdlog::error("GLFW Error {}: {}", error, description);
@@ -98,10 +99,8 @@ int main(int argc, char *argv[]) {
 
     GLFWwindow *window;
     window = glfwCreateWindow(
-            glfwGetVideoMode(glfwGetPrimaryMonitor())->width,
-            glfwGetVideoMode(glfwGetPrimaryMonitor())->height, "Mandelbrot render",
-            glfwGetPrimaryMonitor(),
-            nullptr
+            width, height, "Mandelbrot render",
+            nullptr, nullptr
     );
 
     if (window == nullptr) {
@@ -158,7 +157,7 @@ int main(int argc, char *argv[]) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBindVertexArray(0);
 
-    GLuint shader_program = utils_shaders::LoadShaders("vertex.vert", "fragment_mb.frag");
+    GLuint shader_program = utils_shaders::LoadShadersFromSource(shaders_mandelbrot::VERTEX_SRC, shaders_mandelbrot::FRAGMENT_SRC);
 
     if (shader_program == 0) {
         spdlog::error("Error loading shader");

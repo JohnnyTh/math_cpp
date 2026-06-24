@@ -6,6 +6,52 @@
 #ifndef UTILITIES_SHADERS_HPP
 #define UTILITIES_SHADERS_HPP
 namespace utils_shaders {
+    GLuint LoadShadersFromSource(const char *vertex_src, const char *fragment_src) {
+        GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+        GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+
+        GLint Result = GL_FALSE;
+        int InfoLogLength;
+
+        glShaderSource(VertexShaderID, 1, &vertex_src, nullptr);
+        glCompileShader(VertexShaderID);
+        glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
+        glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> err(InfoLogLength + 1);
+            glGetShaderInfoLog(VertexShaderID, InfoLogLength, nullptr, err.data());
+            printf("%s\n", err.data());
+        }
+
+        glShaderSource(FragmentShaderID, 1, &fragment_src, nullptr);
+        glCompileShader(FragmentShaderID);
+        glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
+        glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> err(InfoLogLength + 1);
+            glGetShaderInfoLog(FragmentShaderID, InfoLogLength, nullptr, err.data());
+            printf("%s\n", err.data());
+        }
+
+        GLuint ProgramID = glCreateProgram();
+        glAttachShader(ProgramID, VertexShaderID);
+        glAttachShader(ProgramID, FragmentShaderID);
+        glLinkProgram(ProgramID);
+        glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+        glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+        if (InfoLogLength > 0) {
+            std::vector<char> err(InfoLogLength + 1);
+            glGetProgramInfoLog(ProgramID, InfoLogLength, nullptr, err.data());
+            printf("%s\n", err.data());
+        }
+
+        glDetachShader(ProgramID, VertexShaderID);
+        glDetachShader(ProgramID, FragmentShaderID);
+        glDeleteShader(VertexShaderID);
+        glDeleteShader(FragmentShaderID);
+        return ProgramID;
+    }
+
     GLuint LoadShaders(const char *vertex_file_path, const char *fragment_file_path) {
         // Create the shaders
         GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
