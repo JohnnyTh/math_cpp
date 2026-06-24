@@ -66,20 +66,32 @@ namespace mandelbrot {
         return complex_set;
     }
 
+    // split double into hi+lo floats such that (double)hi + (double)lo == val
+    inline std::pair<float, float> dsplit(double val) {
+        float hi = (float)val;
+        float lo = (float)(val - (double)hi);
+        return {hi, lo};
+    }
+
+    // stores real_hi, real_lo, imag_hi, imag_lo per pixel (4 floats)
     std::vector<float> gen_complex_set_2_shader(int size_x, int size_y, const ViewParams &vp) {
         std::vector<float> complex_set;
-        complex_set.reserve(size_x * size_y * 2);
+        complex_set.reserve(size_x * size_y * 4);
 
         for (int i_row = 0; i_row < size_y; i_row++) {
             double imag_frac = static_cast<double>(i_row) / (size_y - 1.0);
-            float imag_value = static_cast<float>(mandelbrot::interpolate(vp.imag_min, vp.imag_max, imag_frac));
+            double imag_value = mandelbrot::interpolate(vp.imag_min, vp.imag_max, imag_frac);
+            auto [imag_hi, imag_lo] = dsplit(imag_value);
 
             for (int i_col = 0; i_col < size_x; ++i_col) {
                 double real_frac = static_cast<double>(i_col) / (size_x - 1.0);
-                float real_value = static_cast<float>(mandelbrot::interpolate(vp.real_min, vp.real_max, real_frac));
+                double real_value = mandelbrot::interpolate(vp.real_min, vp.real_max, real_frac);
+                auto [real_hi, real_lo] = dsplit(real_value);
 
-                complex_set.push_back(real_value);
-                complex_set.push_back(imag_value);
+                complex_set.push_back(real_hi);
+                complex_set.push_back(real_lo);
+                complex_set.push_back(imag_hi);
+                complex_set.push_back(imag_lo);
             }
         }
         return complex_set;

@@ -50,8 +50,8 @@ int main(int argc, char *argv[]) {
 
     cxxopts::Options options{argv[0], "Mandelbrot set image rendering tool"};
     options.add_options()
-            ("w,width", "Image width", cxxopts::value<int>()->default_value("1980"))
-            ("h,height", "Image height", cxxopts::value<int>()->default_value("1080"))
+            ("w,width", "Image width", cxxopts::value<int>())
+            ("h,height", "Image height", cxxopts::value<int>())
             ("rmin,real_min", "Real number minimum", cxxopts::value<float>()->default_value("-2.5"))
             ("rmax,real_max", "Real number maximum", cxxopts::value<float>()->default_value("1.0"))
             ("imin,imag_min", "Imaginary number minimum", cxxopts::value<float>()->default_value("-1.1"))
@@ -60,8 +60,19 @@ int main(int argc, char *argv[]) {
             ("t,threshold", "Abs value threshold", cxxopts::value<float>()->default_value("6.0"));
     auto result = options.parse(argc, argv);
 
-    int width = result["width"].as<int>();
-    int height = result["height"].as<int>();
+    // Initialise GLFW
+    glfwSetErrorCallback(glfw_error_callback);
+
+    if (glfwInit() != 1) {
+        spdlog::error("Failed to initialize GLFW");
+        return -1;
+    }
+
+    GLFWmonitor *primary = glfwGetPrimaryMonitor();
+    const GLFWvidmode *mode = glfwGetVideoMode(primary);
+
+    int width = result.count("width") ? result["width"].as<int>() : mode->width;
+    int height = result.count("height") ? result["height"].as<int>() : mode->height;
 
     int n_iterations = result["n_iterations"].as<int>();
     float threshold = result["threshold"].as<float>();
@@ -72,14 +83,6 @@ int main(int argc, char *argv[]) {
         0.025, 0.025, 0.01
     };
     mandelbrot::ViewParams vp = vp_initial;
-
-    // Initialise GLFW
-    glfwSetErrorCallback(glfw_error_callback);
-
-    if (glfwInit() != 1) {
-        spdlog::error("Failed to initialize GLFW");
-        return -1;
-    }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -166,7 +169,7 @@ int main(int argc, char *argv[]) {
     // GL_RG stores 2 values per pixel - Red, Green
     // Red will store real part of complex number and Green - imaginary
     glTexImage2D(
-            GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_FLOAT, complex_set.data()
+            GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, complex_set.data()
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -251,7 +254,7 @@ int main(int argc, char *argv[]) {
         if (is_complex_set_modified) {
             complex_set = mandelbrot::gen_complex_set_2_shader(width, height, vp);
             mandelbrot::print_complex_set_bounds(complex_set, width, height);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RG, GL_FLOAT, complex_set.data());
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, complex_set.data());
         }
         glUseProgram(shader_program);
 

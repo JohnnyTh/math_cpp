@@ -28,53 +28,64 @@ uniform sampler2D complexSet;
 uniform int n_iterations;
 uniform float threshold;
 
-
-vec2 complexMul(vec2 a, vec2 b) {
-    float real = a.x * b.x - a.y * b.y;
-    float imag = a.x * b.y + a.y * b.x;
-    return vec2(real, imag);
+// double-single: a vec2 where x=hi, y=lo, and the true value is x+y
+vec2 ds_add(vec2 a, vec2 b) {
+    float s = a.x + b.x;
+    float v = s - a.x;
+    float e = (a.x - (s - v)) + (b.x - v) + a.y + b.y;
+    return vec2(s, e);
 }
 
-vec2 mandelbrotFunc(vec2 z_val, vec2 complex_val) {
-    return vec2(complexMul(z_val, z_val) + complex_val);
+vec2 ds_sub(vec2 a, vec2 b) {
+    return ds_add(a, vec2(-b.x, -b.y));
 }
 
+vec2 ds_mul(vec2 a, vec2 b) {
+    float p = a.x * b.x;
+    float e = a.x * b.y + a.y * b.x + (a.x * b.x - p);
+    return vec2(p, e);
+}
 
-// coonsider using nonlinear (e.g., logarithmic) scale
+// ds_sq is faster than ds_mul(a, a)
+vec2 ds_sq(vec2 a) {
+    float p = a.x * a.x;
+    float e = 2.0 * a.x * a.y + (a.x * a.x - p);
+    return vec2(p, e);
+}
+
 vec3 computeColorIteration(int iter) {
-    vec3 color;
-    if (iter == n_iterations) {
-        // last iteration - always black color
-        color = vec3(0.0, 0.0, 0.0);
-    }
-    else {
-        // important - cast to float before the divison
-
-        //version 3: log scale, colormap:
-        float color_ = log(float(iter)) / log(float(n_iterations));
-        color = texture(colormap, color_).rgb;
-    }
-    return color;
+    if (iter == n_iterations)
+        return vec3(0.0);
+    float t = log(float(iter)) / log(float(n_iterations));
+    return texture(colormap, t).rgb;
 }
 
 void main()
 {
-    // complex_val.x - real, complex_val.y - imag
-    vec2 complex_val = texture(complexSet, TexCoord).rg;
+    // texture stores: r=real_hi, g=real_lo, b=imag_hi, a=imag_lo
+    vec4 c_tex = texture(complexSet, TexCoord);
+    vec2 cr = vec2(c_tex.r, c_tex.g); // real part as double-single
+    vec2 ci = vec2(c_tex.b, c_tex.a); // imag part as double-single
 
-    vec2 z_value_iterated = vec2(0.0, 0.0);
+    vec2 zr = vec2(0.0, 0.0);
+    vec2 zi = vec2(0.0, 0.0);
     int iter = 0;
 
-    for (iter; iter < n_iterations; iter++) {
-        z_value_iterated = mandelbrotFunc(z_value_iterated, complex_val);
+    for (iter = 0; iter < n_iterations; iter++) {
+        vec2 zr2 = ds_sq(zr);
+        vec2 zi2 = ds_sq(zi);
 
-        if (length(z_value_iterated) > threshold) {
+        // escape check on hi parts (sufficient for threshold test)
+        if ((zr2.x + zi2.x) > threshold * threshold)
             break;
-        }
-    }
-    vec3 color = computeColorIteration(iter);
 
-    FragColor = vec4(color.r, color.g, color.b, 1.0);
+        vec2 new_zr = ds_add(ds_sub(zr2, zi2), cr);
+        vec2 new_zi = ds_add(ds_mul(vec2(2.0, 0.0), ds_mul(zr, zi)), ci);
+        zr = new_zr;
+        zi = new_zi;
+    }
+
+    FragColor = vec4(computeColorIteration(iter), 1.0);
 }
 )glsl";
 
