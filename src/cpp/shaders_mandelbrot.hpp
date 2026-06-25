@@ -67,9 +67,29 @@ void main()
     vec2 cr = vec2(c_tex.r, c_tex.g); // real part as double-single
     vec2 ci = vec2(c_tex.b, c_tex.a); // imag part as double-single
 
+    // ponytail: hi-part only for bulb tests — precision sufficient for membership
+    float x = cr.x, y = ci.x;
+
+    // cardioid check
+    float q = (x - 0.25) * (x - 0.25) + y * y;
+    if (q * (q + (x - 0.25)) < 0.25 * y * y) {
+        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+    // period-2 bulb check
+    if ((x + 1.0) * (x + 1.0) + y * y < 0.0625) {
+        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
     vec2 zr = vec2(0.0, 0.0);
     vec2 zi = vec2(0.0, 0.0);
     int iter = 0;
+
+    // Brent periodicity: tortoise stays fixed for a period, hare advances
+    vec2 zr_hare = vec2(0.0, 0.0);
+    vec2 zi_hare = vec2(0.0, 0.0);
+    int period = 0;
 
     for (iter = 0; iter < n_iterations; iter++) {
         vec2 zr2 = ds_sq(zr);
@@ -83,6 +103,18 @@ void main()
         vec2 new_zi = ds_add(ds_mul(vec2(2.0, 0.0), ds_mul(zr, zi)), ci);
         zr = new_zr;
         zi = new_zi;
+
+        // Brent: if orbit matches the hare, we're cycling → interior point
+        if (abs(zr.x - zr_hare.x) < 1e-6 && abs(zi.x - zi_hare.x) < 1e-6) {
+            iter = n_iterations;
+            break;
+        }
+        period++;
+        if (period > 20) {
+            period = 0;
+            zr_hare = zr;
+            zi_hare = zi;
+        }
     }
 
     FragColor = vec4(computeColorIteration(iter), 1.0);

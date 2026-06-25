@@ -274,6 +274,8 @@ int main(int argc, char *argv[]) {
     int tex_unit_complex_set = 1;
     int tex_unit_colormap = 0;
 
+    glfwSetWindowTitle(window, "Mandelbrot | zoom: 1x");
+
     GLenum err_setup = glGetError();
     if (err_setup != 0) {
         spdlog::error("Got !=0 error code from OpenGL: {}", err_setup);
@@ -295,6 +297,8 @@ int main(int argc, char *argv[]) {
             complex_set = mandelbrot::gen_complex_set_2_shader(width, height, vp);
             mandelbrot::print_complex_set_bounds(complex_set, width, height);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_FLOAT, complex_set.data());
+            double zoom = (vp_initial.real_max - vp_initial.real_min) / (vp.real_max - vp.real_min);
+            glfwSetWindowTitle(window, ("Mandelbrot | zoom: " + std::to_string((long long)zoom) + "x").c_str());
         }
         glUseProgram(shader_program);
 
