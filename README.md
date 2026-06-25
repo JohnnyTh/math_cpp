@@ -74,10 +74,21 @@ git clone https://github.com/jarro2783/cxxopts.git \
 ## Build
 
 ```bash
-mkdir "build"  \
-    && cd build  \
-    && cmake ..  \
-    && cmake --build . -- -j 12
+mkdir build && cmake -S . -B build
+```
+
+Build all targets:
+```bash
+cmake --build build --parallel
+```
+
+Build a specific target:
+```bash
+cmake --build build --target render_mandelbrot_opencv_img
+cmake --build build --target render_mandelbrot_opengl
+cmake --build build --target render_mandelbrot_opengl_shader
+cmake --build build --target render_mandelbrot_imgui
+cmake --build build --target experiments
 ```
 
 ## Run
